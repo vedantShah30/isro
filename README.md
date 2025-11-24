@@ -1,36 +1,160 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ISRO SAC - Satellite Imagery Analysis Platform
+
+A web-based platform for interpreting and analyzing satellite imagery using natural language interfaces. Built for the Space Applications Centre (SAC), ISRO.
+
+## Features
+
+### 🛰️ Core Capabilities
+
+1. **Image Captioning**
+   - Generate comprehensive descriptions of satellite imagery
+   - Supports natural color composite (RGB) images
+   - Expert-level caption generation
+
+2. **Object Grounding**
+   - Localize objects within satellite images using natural language queries
+   - Oriented bounding box visualization
+   - High precision object detection
+
+3. **Visual Question Answering (VQA)**
+   - Answer geometric and semantic attribute questions
+   - Supports binary (yes/no), numeric, and string answers
+   - Context-aware responses
+
+### 📊 Technical Specifications
+
+- **Image Format**: PNG, JPG (L1/L2 processed, 0-255 value range)
+- **Resolution Support**: 0.5m to 10m per pixel
+- **Maximum Size**: 2K × 2K pixels
+- **Color Composite**: RGB natural color
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd inter-mid
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+3. Set up environment variables
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Update `.env.local` with your model API endpoints:
+```env
+CAPTIONING_API_URL=https://your-api.com/caption
+GROUNDING_API_URL=https://your-api.com/ground
+VQA_API_URL=https://your-api.com/vqa
+MODEL_API_KEY=your-api-key
+```
 
-## Learn More
+5. Run the development server
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+6. Open [http://localhost:3000](http://localhost:3000)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+inter-mid/
+├── app/
+│   ├── components/
+│   │   ├── Header.js           # Navigation header
+│   │   ├── ImageUploader.js    # Image upload interface
+│   │   ├── QueryInterface.js   # Analysis mode selection
+│   │   ├── ResultsDisplay.js   # Results visualization
+│   │   └── Scene3D.js          # 3D background
+│   ├── api/
+│   │   ├── model1/route.js     # Captioning API
+│   │   ├── model2/route.js     # Grounding API
+│   │   └── model3/route.js     # VQA API
+│   ├── globals.css
+│   ├── layout.js
+│   └── page.js
+├── public/
+├── .env.example
+├── package.json
+└── README.md
+```
 
-## Deploy on Vercel
+## API Integration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Captioning Endpoint
+```javascript
+POST /api/model1
+FormData: { image: File }
+Response: { caption: string, confidence: number }
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Grounding Endpoint
+```javascript
+POST /api/model2
+FormData: { image: File, query: string }
+Response: { boundingBoxes: Array, count: number }
+```
+
+### VQA Endpoint
+```javascript
+POST /api/model3
+FormData: { image: File, question: string }
+Response: { answer: string, answerType: 'binary'|'numeric'|'string', confidence: number }
+```
+
+## Evaluation Metrics
+
+- **Captioning**: BLEU Score with expert annotations
+- **Grounding**: Intersection-over-Union (IoU) @ 0.7
+- **VQA**: Type-specific accuracy (binary, numeric, attribute)
+
+## Technology Stack
+
+- **Framework**: Next.js 16
+- **UI**: React 19, Tailwind CSS 4
+- **3D Graphics**: React Three Fiber, Three.js
+- **Animations**: Framer Motion
+- **API**: Next.js API Routes
+
+## Deployment
+
+For production deployment:
+
+```bash
+npm run build
+npm start
+```
+
+## Development Guidelines
+
+- Follow ISRO design guidelines
+- Maintain anonymous interface (no institute names)
+- Use professional UI elements (SVG icons, no emojis)
+- Ensure responsive design
+- Optimize for performance
+
+## References
+
+- VRSBench: https://vrsbench.github.io/
+- ISRO SAC Official Website
+
+## License
+
+Property of Space Applications Centre (SAC), ISRO
+
+---
+
+**Note**: This is a prototype platform for the Inter IIT Tech Meet competition. Update API endpoints before production use.
