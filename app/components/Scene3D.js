@@ -97,9 +97,54 @@ function Satellite({ distance, size, color, speed }) {
   );
 }
 
+// Floating asteroids
+function Asteroid({ position, size, speed }) {
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.x += speed * 0.5;
+      meshRef.current.rotation.y += speed;
+      meshRef.current.position.y += Math.sin(state.clock.elapsedTime * speed) * 0.01;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      <dodecahedronGeometry args={[size, 0]} />
+      <meshStandardMaterial color="#6b7280" roughness={0.9} metalness={0.1} />
+    </mesh>
+  );
+}
+
+// Glowing particles
+function GlowingSphere({ position, size, color, intensity }) {
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      const pulse = Math.sin(state.clock.elapsedTime * 2) * 0.3 + 0.7;
+      meshRef.current.scale.set(pulse, pulse, pulse);
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      <sphereGeometry args={[size, 16, 16]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={intensity}
+        transparent
+        opacity={0.6}
+      />
+    </mesh>
+  );
+}
+
 export default function Scene3D() {
   return (
-    <div className="fixed inset-0 -z-10 bg-slate-950">
+    <div className="fixed inset-0 -z-10 bg-black pointer-events-auto">
       <Canvas camera={{ position: [0, 8, 15], fov: 60 }}>
         <ambientLight intensity={0.2} />
         <pointLight position={[0, 0, 0]} intensity={2} color="#fdb813" />
@@ -108,7 +153,7 @@ export default function Scene3D() {
         <Stars
           radius={100}
           depth={50}
-          count={5000}
+          count={15000}
           factor={4}
           saturation={0}
           fade
@@ -132,6 +177,21 @@ export default function Scene3D() {
         <Satellite distance={5.5} size={0.08} color="#3b82f6" speed={0.02} />
         <Satellite distance={7.2} size={0.06} color="#8b5cf6" speed={0.015} />
         <Satellite distance={9.5} size={0.07} color="#ec4899" speed={0.018} />
+        
+        {/* Floating asteroids */}
+        <Asteroid position={[-6, 2, -4]} size={0.12} speed={0.01} />
+        <Asteroid position={[8, -3, 5]} size={0.15} speed={0.008} />
+        <Asteroid position={[-4, -2, 7]} size={0.1} speed={0.012} />
+        <Asteroid position={[5, 3, -6]} size={0.13} speed={0.009} />
+        <Asteroid position={[-7, 1, 3]} size={0.11} speed={0.011} />
+        <Asteroid position={[3, -4, -5]} size={0.14} speed={0.007} />
+        
+        {/* Glowing particles */}
+        <GlowingSphere position={[-3, 4, 2]} size={0.05} color="#60a5fa" intensity={0.8} />
+        <GlowingSphere position={[4, -2, 6]} size={0.06} color="#c084fc" intensity={0.7} />
+        <GlowingSphere position={[-5, 3, -3]} size={0.04} color="#f472b6" intensity={0.9} />
+        <GlowingSphere position={[6, 2, -5]} size={0.05} color="#34d399" intensity={0.6} />
+        <GlowingSphere position={[-2, -3, 4]} size={0.07} color="#fbbf24" intensity={0.8} />
         
         <OrbitControls 
           enableZoom={true}
