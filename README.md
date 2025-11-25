@@ -21,7 +21,7 @@ A web-based platform for interpreting and analyzing satellite imagery using natu
    - Supports binary (yes/no), numeric, and string answers
    - Context-aware responses
 
-### 📊 Technical Specifications
+###  Technical Specifications
 
 - **Image Format**: PNG, JPG (L1/L2 processed, 0-255 value range)
 - **Resolution Support**: 0.5m to 10m per pixel
