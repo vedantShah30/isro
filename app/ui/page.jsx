@@ -5,7 +5,7 @@ const page = () => {
   return (
     <div>
         <Scene3D />
-        page</div>
+      </div>
   )
 }
 

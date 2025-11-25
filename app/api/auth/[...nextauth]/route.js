@@ -14,31 +14,31 @@ export const authOptions = {
     async signIn({ user, account, profile }) {
       try {
         await connectDB();
-        
-        // Check if user exists
-        let dbUser = await User.findOne({ email: user.email });
-        
+        const googleId = account.providerAccountId;
+        let dbUser = await User.findOne({ googleProviderId: googleId });
         if (!dbUser) {
-          // Create new user
+          dbUser = await User.findOne({ email: user.email });
+        }
+        if (!dbUser) {
           dbUser = await User.create({
             name: user.name,
             email: user.email,
             avatar: user.image,
-            googleProviderId: account.providerAccountId,
+            googleProviderId: googleId,
             isTooltip: true,
-            chats: [],
-            routines: [],
           });
         } else {
-          // Update user info if needed
+          if (!dbUser.googleProviderId) {
+            dbUser.googleProviderId = googleId;
+          }
           dbUser.name = user.name;
           dbUser.avatar = user.image;
           await dbUser.save();
         }
-        
+
         return true;
       } catch (error) {
-        console.error('Error in signIn callback:', error);
+        console.error("Error in signIn callback:", error);
         return false;
       }
     },
@@ -55,7 +55,7 @@ export const authOptions = {
     },
   },
   pages: {
-    signIn: '/',
+    signIn: "/",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
