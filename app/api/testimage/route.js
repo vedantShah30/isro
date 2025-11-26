@@ -22,7 +22,7 @@ export async function POST(request) {
     const buffer = Buffer.from(bytes);
     const base64Image = buffer.toString('base64');
 
-    // Get the mime type
+    // Get the mime type 
     const mimeType = image.type;
 
     // Initialize Gemini Pro Vision model
