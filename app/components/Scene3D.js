@@ -21,7 +21,7 @@ function Sun() {
         color="#fdb813"
         emissive="#fdb813"
         emissiveIntensity={0.3}
-        roughness={0.3}
+        roughness={500}
       />
     </mesh>
   );
@@ -117,6 +117,59 @@ function Asteroid({ position, size, speed }) {
   );
 }
 
+// Asteroid Belt
+function AsteroidBelt({ innerRadius, outerRadius, count }) {
+  const asteroids = [];
+  
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count;
+    const distance = innerRadius + Math.random() * (outerRadius - innerRadius);
+    const x = Math.cos(angle) * distance;
+    const z = Math.sin(angle) * distance;
+    const y = (Math.random() - 0.5) * 0.5; // Slight vertical variation
+    const size = 0.03 + Math.random() * 0.08;
+    const speed = 0.001 + Math.random() * 0.003;
+    
+    asteroids.push({
+      position: [x, y, z],
+      size,
+      speed,
+      key: i
+    });
+  }
+  
+  return (
+    <>
+      {asteroids.map((asteroid) => (
+        <AsteroidBeltParticle
+          key={asteroid.key}
+          position={asteroid.position}
+          size={asteroid.size}
+          speed={asteroid.speed}
+        />
+      ))}
+    </>
+  );
+}
+
+function AsteroidBeltParticle({ position, size, speed }) {
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.x += speed;
+      meshRef.current.rotation.y += speed * 0.7;
+    }
+  });
+  
+  return (
+    <mesh ref={meshRef} position={position}>
+      <dodecahedronGeometry args={[size, 0]} />
+      <meshStandardMaterial color="#8b8680" roughness={1} metalness={0.2} />
+    </mesh>
+  );
+}
+
 // Glowing particles
 function GlowingSphere({ position, size, color, intensity }) {
   const meshRef = useRef();
@@ -168,6 +221,10 @@ export default function Scene3D() {
         <Planet distance={3.5} size={0.25} color="#ffc649" speed={0.015} orbitSpeed={0.012} />
         <Planet distance={4.8} size={0.28} color="#4a90e2" speed={0.018} orbitSpeed={0.010} />
         <Planet distance={6} size={0.2} color="#e27b58" speed={0.019} orbitSpeed={0.008} />
+        
+        {/* Asteroid Belt between Mars and Jupiter */}
+        <AsteroidBelt innerRadius={6.8} outerRadius={7.6} count={200} />
+        
         <Planet distance={8} size={0.6} color="#c88b3a" speed={0.025} orbitSpeed={0.005} />
         <Planet distance={10.5} size={0.55} color="#daa520" speed={0.022} orbitSpeed={0.004} hasRing={true} />
         <Planet distance={12.5} size={0.35} color="#4fd0e0" speed={0.016} orbitSpeed={0.003} />
