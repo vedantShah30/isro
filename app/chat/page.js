@@ -9,7 +9,7 @@ import Header from "../components/Header";
 import ImageUploader from "../components/ImageUploader";
 import ResultsDisplay from "../components/ResultsDisplay";
 import QueryInterface from "../components/QueryInterface";
-
+import ChatSection from '../components/ChatSection';
 const Scene3D = dynamic(() => import("../components/Scene3D"), {
   ssr: false,
   loading: () => <div className="fixed inset-0 -z-10 bg-black" />,
@@ -22,6 +22,43 @@ export default function ChatPage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [results, setResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const [chatHistory, setChatHistory] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Captioning');
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    
+    if (!inputMessage.trim()) return;
+
+    const message = inputMessage.trim();
+    const category = selectedCategory;
+
+    // Add user query to chat history
+    const newChat = {
+      id: Date.now(),
+      query: message,
+      response: '', // Will be updated when AI responds
+      category: category,
+      timestamp: new Date()
+    };
+
+    setChatHistory(prev => [...prev, newChat]);
+    setInputMessage('');
+
+    // Simulate AI response (replace with actual API call)
+    setTimeout(() => {
+      setChatHistory(prev => 
+        prev.map(chat => 
+          chat.id === newChat.id 
+            ? { ...chat, response: `This is a simulated response for "${message}" in ${category} mode. Replace this with actual API response.` }
+            : chat
+        )
+      );
+    }, 1000);
+  };
+
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
@@ -41,6 +78,7 @@ export default function ChatPage() {
     setSelectedImage(file);
     setImagePreview(preview);
   };
+  
 
   return (
     <div className="min-h-screen text-white overflow-hidden bg-black">
