@@ -47,7 +47,7 @@ export default function ImageUploader({ onImageSelect }) {
       transition={{ duration: 0.6 }}
       className="backdrop-blur-md bg-slate-900/40 border border-slate-700/50 rounded-lg p-6"
     >
-      <h2 className="text-xl font-semibold mb-4 text-slate-200">Upload Satellite Image</h2>
+      
       
       <div
         onDrop={handleDrop}
@@ -120,15 +120,7 @@ export default function ImageUploader({ onImageSelect }) {
         )}
       </div>
       
-      <div className="mt-4 text-xs text-slate-400">
-        <p className="font-medium mb-2">Image Requirements:</p>
-        <ul className="space-y-1 ml-4 list-disc">
-          <li>L1/L2 processed satellite imagery</li>
-          <li>Converted to 0-255 value range</li>
-          <li>RGB natural color composite</li>
-          <li>Resolution: 0.5m to 10m per pixel</li>
-        </ul>
-      </div>
+    
     </motion.div>
   );
 }
