@@ -1,19 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
-import Header from '../components/Header';
-import ImageUploader from '../components/ImageUploader';
-import QueryInterface from '../components/QueryInterface';
-import ResultsDisplay from '../components/ResultsDisplay';
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
+import Header from "../components/Header";
+import ImageUploader from "../components/ImageUploader";
+import ResultsDisplay from "../components/ResultsDisplay";
+import QueryInterface from "../components/QueryInterface";
 
-const Scene3D = dynamic(() => import('../components/Scene3D'), {
+const Scene3D = dynamic(() => import("../components/Scene3D"), {
   ssr: false,
-  loading: () => <div className="fixed inset-0 -z-10 bg-black" />
+  loading: () => <div className="fixed inset-0 -z-10 bg-black" />,
 });
 
 export default function ChatPage() {
@@ -25,12 +24,10 @@ export default function ChatPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-    }
+    if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-cyan-400 text-xl">Loading...</div>
@@ -38,9 +35,7 @@ export default function ChatPage() {
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
   const handleImageSelect = (file, preview) => {
     setSelectedImage(file);
@@ -48,79 +43,214 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen text-white overflow-x-hidden">
+    <div className="min-h-screen text-white overflow-hidden bg-black">
       <Scene3D />
-      
-      <Header />
-      
-      <main className="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
-            <ImageUploader onImageSelect={handleImageSelect} />
-            
+
+      {/* Left vertical sidebar with SVG icons */}
+      <aside className="fixed left-0 top-0 bottom-0 w-20 bg-[#0b1116] border-r border-cyan-600/10 flex flex-col items-center py-6 space-y-6 z-30">
+        <div className="w-10 h-10 rounded-lg bg-cyan-900/10 flex items-center justify-center">
+          {/* globe svg */}
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-cyan-400"
+          >
+            <path
+              d="M12 2a10 10 0 100 20 10 10 0 000-20z"
+              stroke="#38bdf8"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M2 12h20M12 2c2.5 3 2.5 9 0 14M12 2c-2.5 3-2.5 9 0 14"
+              stroke="#0ea5b5"
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+
+        <button className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 34 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 7.5C4 5.01472 6.01472 3 8.5 3H25.5C27.9853 3 30 5.01472 30 7.5V24.5C30 26.9853 27.9853 29 25.5 29H8.5C6.01472 29 4 26.9853 4 24.5V7.5ZM8.5 5C7.11929 5 6 6.11929 6 7.5V24.5C6 25.8807 7.11929 27 8.5 27H25.5C26.8807 27 28 25.8807 28 24.5V7.5C28 6.11929 26.8807 5 25.5 5H8.5ZM17 8C17.5523 8 18 8.44772 18 9V15H24C24.5523 15 25 15.4477 25 16C25 16.5523 24.5523 17 24 17H18V23C18 23.5523 17.5523 24 17 24C16.4477 24 16 23.5523 16 23V17H10C9.44772 17 9 16.5523 9 16C9 15.4477 9.44771 15 10 15H16V9C16 8.44772 16.4477 8 17 8Z"
+              fill="white"
+              stroke="#0A0F19"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+
+        <button className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M8.70711 3.29289C9.09763 3.68342 9.09763 4.31658 8.70711 4.70711L5.41421 8H17.5C23.299 8 28 12.701 28 18.5C28 24.299 23.299 29 17.5 29C11.701 29 7 24.299 7 18.5C7 17.9477 7.44772 17.5 8 17.5C8.55228 17.5 9 17.9477 9 18.5C9 23.1944 12.8056 27 17.5 27C22.1944 27 26 23.1944 26 18.5C26 13.8056 22.1944 10 17.5 10H5.41421L8.70711 13.2929C9.09763 13.6834 9.09763 14.3166 8.70711 14.7071C8.31658 15.0976 7.68342 15.0976 7.29289 14.7071L2.29289 9.70711C1.90237 9.31658 1.90237 8.68342 2.29289 8.29289L7.29289 3.29289C7.68342 2.90237 8.31658 2.90237 8.70711 3.29289Z"
+              fill="white"
+              stroke="#0A0F19"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+
+        <button className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 34 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15 9C15 8.44772 15.4477 8 16 8C16.5523 8 17 8.44772 17 9V16H21C21.5523 16 22 16.4477 22 17C22 17.5523 21.5523 18 21 18H16C15.4477 18 15 17.5523 15 17V9ZM17 30C24.732 30 31 23.732 31 16C31 8.26801 24.732 2 17 2C9.26801 2 3 8.26801 3 16C3 23.732 9.26801 30 17 30ZM17 28C10.3726 28 5 22.6274 5 16C5 9.37258 10.3726 4 17 4C23.6274 4 29 9.37258 29 16C29 22.6274 23.6274 28 17 28Z"
+              fill="white"
+              stroke="#0A0F19"
+            />
+          </svg>
+        </button>
+
+        <div className="mt-auto w-10 h-10 rounded-lg bg-cyan-900/10 flex items-center justify-center">
+          {/* user svg */}
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 12a4 4 0 100-8 4 4 0 000 8z"
+              stroke="#60a5fa"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M4 20a8 8 0 0116 0"
+              stroke="#60a5fa"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      </aside>
+
+      {/* Main content area */}
+      <main className="relative z-20 ml-20">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left - big upload card */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="backdrop-blur-xl bg-gradient-to-br from-slate-900/50 to-slate-800/30 border border-cyan-500/30 rounded-xl p-6 shadow-xl shadow-cyan-500/10"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl bg-[#0f1720] border border-cyan-700/10 p-8 min-h-[420px] shadow-lg"
             >
-              <h3 className="text-lg font-semibold mb-4 text-white">Platform Capabilities</h3>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <div>
-                    <h4 className="text-sm font-medium text-slate-300">Image Captioning</h4>
-                    <p className="text-xs text-slate-400 mt-1">Generate comprehensive descriptions of satellite imagery</p>
+              <div className="h-full flex flex-col">
+                <div className="flex-1 flex items-center justify-center">
+                  {/* If ImageUploader has its own UI, we slot it here. Otherwise it will render its dropzone. */}
+                  <div className="w-full max-w-[520px]">
+                    <ImageUploader onImageSelect={handleImageSelect} />
                   </div>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <div>
-                    <h4 className="text-sm font-medium text-slate-300">Object Grounding</h4>
-                    <p className="text-xs text-slate-400 mt-1">Localize objects with oriented bounding boxes</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h4 className="text-sm font-medium text-slate-300">Visual Q&A</h4>
-                    <p className="text-xs text-slate-400 mt-1">Answer questions about geometric and semantic attributes</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 pt-6 border-t border-cyan-500/20">
-                <h4 className="text-sm font-medium text-white mb-3">Supported Formats</h4>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2 py-1 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-500/40 rounded text-xs text-cyan-200">PNG</span>
-                  <span className="px-2 py-1 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-500/40 rounded text-xs text-cyan-200">JPG</span>
-                  <span className="px-2 py-1 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-500/40 rounded text-xs text-cyan-200">Up to 2K×2K</span>
-                  <span className="px-2 py-1 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-500/40 rounded text-xs text-cyan-200">0.5-10m/px</span>
+
+                <div className="mt-6 text-xs text-slate-400">
+                  <div>supports: text/cc</div>
+                  <div className="mt-1">maximum file size of 20mb</div>
                 </div>
               </div>
             </motion.div>
+
+            {/* Right - results / tabs */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05 }}
+              className="rounded-2xl bg-[#0f1720] border border-cyan-700/10 p-6 min-h-[420px] shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-6 text-sm text-slate-300">
+                  <button className="px-1 py-2 text-slate-300/80">All</button>
+                  <button className="px-1 py-2 text-slate-300/60">
+                    Captioning
+                  </button>
+                  <button className="px-1 py-2 text-slate-300/60">
+                    Grounding
+                  </button>
+                  <button className="px-1 py-2 text-slate-300/60">VQNA</button>
+                </div>
+                <div className="text-xs text-slate-500">&nbsp;</div>
+              </div>
+
+              <div className="mt-6 h-[330px] overflow-auto text-slate-300">
+                {!results && (
+                  <div className="flex items-start">
+                    <div className="px-3 py-2 rounded bg-slate-800/60 text-slate-300">
+                      Upload the image for getting quality insights
+                    </div>
+                  </div>
+                )}
+
+                {results && (
+                  <ResultsDisplay
+                    results={results}
+                    isAnalyzing={isAnalyzing}
+                    imagePreview={imagePreview}
+                  />
+                )}
+              </div>
+            </motion.div>
           </div>
-          
-          <div className="lg:col-span-2 space-y-6">
-            <QueryInterface
-              selectedImage={selectedImage}
-              onAnalysisStart={() => { setIsAnalyzing(true); setResults(null); }}
-              onAnalysisComplete={(data) => { setResults(data); setIsAnalyzing(false); }}
-            />
-            <ResultsDisplay results={results} isAnalyzing={isAnalyzing} imagePreview={imagePreview} />
+
+          {/* Bottom centered query input */}
+          <div className="mt-12 flex flex-col items-center">
+            <div className="flex space-x-6 text-sm text-slate-300 mb-4">
+              <span>Captioning</span>
+              <span>Grounding</span>
+              <span>VQNA</span>
+            </div>
+
+            <div className="w-full max-w-2xl">
+              <QueryInterface
+                selectedImage={selectedImage}
+                onAnalysisStart={() => {
+                  setIsAnalyzing(true);
+                  setResults(null);
+                }}
+                onAnalysisComplete={(data) => {
+                  setResults(data);
+                  setIsAnalyzing(false);
+                }}
+              />
+            </div>
           </div>
         </div>
       </main>
-      
-      <footer className="relative z-10 mt-16 border-t border-cyan-500/20 backdrop-blur-xl bg-black/30">
-        <div className="container mx-auto px-4 py-6 text-center text-sm text-slate-300">
-          <p>Space Applications Centre (SAC) - ISRO | Satellite Imagery Analysis Platform</p>
+
+      <footer className="relative z-20 mt-16 border-t border-cyan-500/20 backdrop-blur-xl bg-black/30">
+        <div className="max-w-7xl mx-auto px-6 py-6 text-center text-sm text-slate-300">
+          <p>
+            Space Applications Centre (SAC) - ISRO | Satellite Imagery Analysis
+            Platform
+          </p>
         </div>
       </footer>
     </div>

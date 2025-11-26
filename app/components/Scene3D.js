@@ -20,7 +20,7 @@ function Sun() {
       <meshStandardMaterial
         color="#fdb813"
         emissive="#fdb813"
-        emissiveIntensity={0.8}
+        emissiveIntensity={0.3}
         roughness={0.3}
       />
     </mesh>
