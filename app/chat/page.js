@@ -60,78 +60,81 @@ export default function ChatPage() {
     }
   };
 
-  const sendMessage = async (message, category) => {
-    if (!message.trim()) return;
+const sendMessage = async (message, category) => {
+  if (!message.trim()) return;
 
-    const msg = message.trim();
+  const msg = message.trim();
 
-    const tempChat = {
-      id: Date.now(),
-      query: msg,
-      response: "Processing...",
-      timestamp: new Date(),
-      category,
-      error: false,
-    };
+  const tempId = Date.now();
 
-    setChatHistory((prev) => [...prev, tempChat]);
-    setInputMessage("");
-
-    try {
-      const res = await fetch("/api/chats/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: session?.user?.id,
-          imageUrl: imagePreview,
-          prompt: msg,
-          category,
-          routineId: null,
-          metadata: {
-            uploadedAt: new Date(),
-            processingTime: 0,
-            imageSize: "1024x1024",
-          },
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setChatHistory((prev) =>
-          prev.map((c) =>
-            c.id === tempChat.id
-              ? {
-                  ...c,
-                  response: data.error || "An error occurred",
-                  error: true,
-                }
-              : c
-          )
-        );
-        return;
-      }
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.id === tempChat.id
-            ? { ...c, response: JSON.stringify(data.response, null, 2) }
-            : c
-        )
-      );
-    } catch (err) {
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.id === tempChat.id
-            ? {
-                ...c,
-                response: `Request failed: ${err.message}`,
-                error: true,
-              }
-            : c
-        )
-      );
-    }
+  // temporary UI message
+  const tempChat = {
+    id: tempId,
+    query: msg,
+    response: "Processing...",
+    timestamp: new Date(),
+    category,
+    error: false,
   };
+
+  setChatHistory((prev) => [...prev, tempChat]);
+  setInputMessage("");
+
+  try {
+    // 1️⃣ Send request to API
+    const res = await fetch("/api/chats/create", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageUrl: imagePreview,
+        routineId: null,
+        responses: [
+          {
+            type: category.toLowerCase(),
+            prompt: msg,
+            response: `This is placeholder response for ${msg} this will be replaced soon`,
+          },
+        ],
+        metadata: {
+          uploadedAt: new Date(),
+          processingTime: 0,
+          imageSize: "1024x1024",
+        },
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempId
+            ? { ...c, response: data.error || "Error saving chat", error: true }
+            : c
+        )
+      );
+      return;
+    }
+
+    // 2️⃣ Replace placeholder with ACTUAL response
+    const savedResponse = data.chat.responses[0].response;
+
+    setChatHistory((prev) =>
+      prev.map((c) =>
+        c.id === tempId
+          ? { ...c, response: JSON.stringify(savedResponse, null, 2) }
+          : c
+      )
+    );
+  } catch (err) {
+    setChatHistory((prev) =>
+      prev.map((c) =>
+        c.id === tempId ? { ...c, response: err.message, error: true } : c
+      )
+    );
+  }
+};
   const handleSendMessage = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     sendMessage(inputMessage, selectedCategory);
@@ -154,6 +157,25 @@ export default function ChatPage() {
   const handleImageSelect = (file, preview) => {
     setSelectedImage(file);
     setImagePreview(preview);
+  };
+
+  const loadUserChats = async () => {
+    try {
+      const res = await fetch("/api/chats/get", {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        console.error("Error fetching chats:", data.error);
+        return;
+      }
+
+      console.log("User Chats:", data.chats);
+    } catch (err) {
+      console.error("Failed to load chats:", err);
+    }
   };
 
   return (
@@ -180,7 +202,7 @@ export default function ChatPage() {
               </svg>
             </div>
           </Link>
-
+          {/* add routines*/}
           <button
             onClick={() => setIsRoutinesOpen(true)}
             className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors"
@@ -200,7 +222,7 @@ export default function ChatPage() {
               />
             </svg>
           </button>
-
+          {/* back */}
           <button className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -218,8 +240,11 @@ export default function ChatPage() {
               />
             </svg>
           </button>
-
-          <button className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center">
+          {/* recent chats */}
+          <button
+            className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center"
+            onClick={loadUserChats}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"

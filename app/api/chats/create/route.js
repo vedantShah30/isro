@@ -1,58 +1,53 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth/[...nextauth]/route";
 import Chat from "@/models/Chat";
+import connectDB from "@/lib/mongodb";
 
 export async function POST(req) {
   try {
-    if (!mongoose.connections[0].readyState) {
-      await mongoose.connect(process.env.MONGODB_URI);
+    await connectDB();
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Not authenticated" },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
-    const { imageUrl, prompt, category, routineId } = body;
+    const { imageUrl, routineId = null, responses = [], metadata = {} } = body;
 
     if (!imageUrl) {
       return NextResponse.json(
-        { success: false, error: "Image URL is required" },
+        { success: false, error: "Image URL missing" },
         { status: 400 }
       );
     }
 
-    if (!prompt) {
+    if (!Array.isArray(responses) || responses.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Prompt is required" },
+        { success: false, error: "Responses must be a non-empty array" },
         { status: 400 }
       );
     }
 
-    // Mock model response
-    const modelResponse = {
-      output: `Mock ${category} response for "${prompt}"`,
-      category,
-    };
-
-    const newChat = await Chat.create({
-      user: body.userId || null,
+    const chat = await Chat.create({
+      user: session.user.id,
       imageUrl,
-      routine: routineId || null,
-      isFirst: false,
-      responses: [
-        {
-          type: category.toLowerCase(),
-          prompt,
-          response: modelResponse,
-        },
-      ],
-      metadata: body.metadata || {},
+      routine: routineId,
+      responses,
+      metadata,
     });
 
     return NextResponse.json({
       success: true,
-      response: modelResponse,
-      chat: newChat,
+      message: "Chat saved",
+      chat,
     });
   } catch (error) {
-    console.error("Chat Create API Error:", error);
+    console.error("Chat Create Error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
