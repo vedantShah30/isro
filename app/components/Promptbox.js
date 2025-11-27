@@ -1,13 +1,5 @@
 import React, { useState } from "react";
 
-/**
- * Promptbox
- * Props:
- * - value: controlled input value
- * - onChange: (value) => void
- * - onSend: (message, category) => void
- * - selectedCategory, setSelectedCategory: to control category externally
- */
 const Promptbox = ({
   value,
   onChange,

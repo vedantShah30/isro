@@ -34,34 +34,104 @@ export default function ChatPage() {
   const [inputMessage, setInputMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Captioning");
 
-  const sendMessage = (message, category) => {
-    if (!message || !message.trim()) return;
-    const msg = message.trim();
+  const saveChatToDB = async ({ imageUrl, responses, routineId }) => {
+    try {
+      const res = await fetch("/api/chats/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl,
+          responses,
+          routineId,
+          metadata: {
+            uploadedAt: new Date(),
+            processingTime: 1000, // example
+            imageSize: "1024x1024",
+          },
+        }),
+      });
 
-    const newChat = {
-      id: Date.now(),
-      query: msg,
-      response: "",
-      category: category,
-      timestamp: new Date(),
-    };
+      const data = await res.json();
+      console.log("Chat Saved:", data);
 
-    setChatHistory((prev) => [...prev, newChat]);
-    setInputMessage("");
-    setTimeout(() => {
-      setChatHistory((prev) =>
-        prev.map((chat) =>
-          chat.id === newChat.id
-            ? {
-                ...chat,
-                response: `This is a simulated response for "${msg}" in ${category} mode. Replace this with actual API response.`,
-              }
-            : chat
-        )
-      );
-    }, 1000);
+      return data;
+    } catch (err) {
+      console.error("Save Chat Error:", err);
+    }
   };
 
+  const sendMessage = async (message, category) => {
+    if (!message.trim()) return;
+
+    const msg = message.trim();
+
+    const tempChat = {
+      id: Date.now(),
+      query: msg,
+      response: "Processing...",
+      timestamp: new Date(),
+      category,
+      error: false,
+    };
+
+    setChatHistory((prev) => [...prev, tempChat]);
+    setInputMessage("");
+
+    try {
+      const res = await fetch("/api/chats/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: session?.user?.id,
+          imageUrl: imagePreview,
+          prompt: msg,
+          category,
+          routineId: null,
+          metadata: {
+            uploadedAt: new Date(),
+            processingTime: 0,
+            imageSize: "1024x1024",
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.id === tempChat.id
+              ? {
+                  ...c,
+                  response: data.error || "An error occurred",
+                  error: true,
+                }
+              : c
+          )
+        );
+        return;
+      }
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempChat.id
+            ? { ...c, response: JSON.stringify(data.response, null, 2) }
+            : c
+        )
+      );
+    } catch (err) {
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempChat.id
+            ? {
+                ...c,
+                response: `Request failed: ${err.message}`,
+                error: true,
+              }
+            : c
+        )
+      );
+    }
+  };
   const handleSendMessage = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     sendMessage(inputMessage, selectedCategory);
