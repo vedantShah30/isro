@@ -27,18 +27,6 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true, // Show tooltips for new users
     },
-    chats: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Chat',
-      },
-    ],
-    routines: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Routine',
-      },
-    ],
   },
   {
     timestamps: true, // Adds createdAt and updatedAt
@@ -46,7 +34,7 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Index for faster queries
-// UserSchema.index({ email: 1 });
-// UserSchema.index({ googleProviderId: 1 });
+UserSchema.index({ email: 1 });
+UserSchema.index({ googleProviderId: 1 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

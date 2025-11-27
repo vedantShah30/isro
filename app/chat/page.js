@@ -33,7 +33,7 @@ export default function ChatPage() {
   const [chatHistory, setChatHistory] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Captioning");
-  
+
   const sendMessage = (message, category) => {
     if (!message || !message.trim()) return;
     const msg = message.trim();
