@@ -206,9 +206,7 @@ export default function ChatPage() {
         <div className="max-w-7xl mx-auto px-6 py-10 flex gap-8">
           {/* Left - big upload card */}
           <UploadCard onImageSelect={handleImageSelect} />
-          <div id="chat-container" className="overflow-y-auto h-full">
-            <ChatSection chatHistory={chatHistory} />
-          </div>
+          <ChatSection chatHistory={chatHistory} />
         </div>
         {isChatListOpen && (
           <div className="fixed right-0 top-0 h-full w-80 bg-[#0f1720] border-l border-cyan-800/20 p-4 overflow-y-auto z-50 shadow-xl">
@@ -246,13 +244,13 @@ export default function ChatPage() {
                   key={chat._id}
                   onClick={() => openChat(chat)}
                   className={`
-        p-3 rounded-lg mb-2 cursor-pointer transition-all border
-        ${
-          isActive
-            ? "bg-cyan-900/40 border-cyan-500 shadow-lg"
-            : "bg-white/5 border-transparent hover:bg-white/10"
-        }
-      `}
+                    p-3 rounded-lg mb-2 cursor-pointer transition-all border
+                    ${
+                      isActive
+                        ? "bg-cyan-900/40 border-cyan-500 shadow-lg"
+                        : "bg-white/5 border-transparent hover:bg-white/10"
+                    }
+                  `}
                 >
                   <p className="font-semibold">{chat.title}</p>
                   <p className="text-xs text-gray-400">
