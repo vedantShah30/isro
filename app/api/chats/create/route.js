@@ -33,13 +33,25 @@ export async function POST(req) {
       );
     }
 
-    const chat = await Chat.create({
+    let chat = await Chat.findOne({
       user: session.user.id,
       imageUrl,
-      routine: routineId,
-      responses,
-      metadata,
+      routine: routineId??null,
     });
+
+    if(!chat){
+      chat = await Chat.create({
+        user: session.user.id,
+        imageUrl,
+        routine: routineId ?? null,
+        responses,
+        metadata,
+      });
+    }
+    else {
+      chat.responses.push(...responses);
+      await chat.save();
+    }
 
     return NextResponse.json({
       success: true,

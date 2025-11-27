@@ -33,6 +33,7 @@ export default function ChatPage() {
   const [chatHistory, setChatHistory] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Captioning");
+  const [currentImage, setCurrentImage] = useState(null);
 
   const saveChatToDB = async ({ imageUrl, responses, routineId }) => {
     try {
@@ -81,7 +82,6 @@ const sendMessage = async (message, category) => {
   setInputMessage("");
 
   try {
-    // 1️⃣ Send request to API
     const res = await fetch("/api/chats/create", {
       method: "POST",
       credentials: "include",
@@ -116,8 +116,6 @@ const sendMessage = async (message, category) => {
       );
       return;
     }
-
-    // 2️⃣ Replace placeholder with ACTUAL response
     const savedResponse = data.chat.responses[0].response;
 
     setChatHistory((prev) =>
@@ -155,8 +153,13 @@ const sendMessage = async (message, category) => {
   if (!session) return null;
 
   const handleImageSelect = (file, preview) => {
+    if(currentImage && preview !== currentImage){
+      window.location.reload();
+      return;
+    }
     setSelectedImage(file);
     setImagePreview(preview);
+    setCurrentImage(preview);
   };
 
   const loadUserChats = async () => {
