@@ -22,6 +22,7 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  /* overflow: hidden !important; */
 }
 
 * {
@@ -30,18 +31,18 @@ body {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(217, 217, 217, 0.7);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.5);
+  background: rgba(217, 217, 217, 0.7);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.7);
+  background: rgba(217, 217, 217, 0.7);
 }
