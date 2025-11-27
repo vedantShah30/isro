@@ -185,14 +185,13 @@ export default function ChatPage() {
 
       {/* Main content area */}
       <main className="relative z-20 ml-20">
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="max-w-7xl mx-auto px-6 py-10 flex gap-8">
             {/* Left - big upload card */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="rounded-2xl bg-[#0f1720] border border-cyan-700/10 p-8 min-h-[420px] shadow-lg"
+              className="rounded-2xl bg-[#0f1720] border border-cyan-700/10 p-8 min-h-[420px] shadow-lg min-w-fit"
             >
               <div className="h-full flex flex-col">
                 <div className="flex-1 flex items-center justify-center">
@@ -201,78 +200,11 @@ export default function ChatPage() {
                     <ImageUploader onImageSelect={handleImageSelect} />
                   </div>
                 </div>
-
-                <div className="mt-6 text-xs text-slate-400">
-                  <div>supports: text/cc</div>
-                  <div className="mt-1">maximum file size of 20mb</div>
-                </div>
               </div>
             </motion.div>
-
-            {/* Right - results / tabs */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.05 }}
-              className="rounded-2xl bg-[#0f1720] border border-cyan-700/10 p-6 min-h-[420px] shadow-lg"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex space-x-6 text-sm text-slate-300">
-                  <button className="px-1 py-2 text-slate-300/80">All</button>
-                  <button className="px-1 py-2 text-slate-300/60">
-                    Captioning
-                  </button>
-                  <button className="px-1 py-2 text-slate-300/60">
-                    Grounding
-                  </button>
-                  <button className="px-1 py-2 text-slate-300/60">VQNA</button>
-                </div>
-                <div className="text-xs text-slate-500">&nbsp;</div>
-              </div>
-
-              <div className="mt-6 h-[330px] overflow-auto text-slate-300">
-                {!results && (
-                  <div className="flex items-start">
-                    <div className="px-3 py-2 rounded bg-slate-800/60 text-slate-300">
-                      Upload the image for getting quality insights
-                    </div>
-                  </div>
-                )}
-
-                {results && (
-                  <ResultsDisplay
-                    results={results}
-                    isAnalyzing={isAnalyzing}
-                    imagePreview={imagePreview}
-                  />
-                )}
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Bottom centered query input */}
-          {/* <div className="mt-12 flex flex-col items-center">
-            <div className="flex space-x-6 text-sm text-slate-300 mb-4">
-              <span>Captioning</span>
-              <span>Grounding</span>
-              <span>VQNA</span>
-            </div>
-
-            <div className="w-full max-w-2xl">
-              <QueryInterface
-                selectedImage={selectedImage}
-                onAnalysisStart={() => {
-                  setIsAnalyzing(true);
-                  setResults(null);
-                }}
-                onAnalysisComplete={(data) => {
-                  setResults(data);
-                  setIsAnalyzing(false);
-                }}
-              />
-            </div>
-          </div> */}
+          <ChatSection />
         </div>
+          {/* Bottom centered query input */}
       </main>
 
       <footer className="absolute bottom-0 mx-auto w-full z-20 mt-16 border-t border-cyan-500/20 backdrop-blur-xl bg-black/30">
