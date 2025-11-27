@@ -194,6 +194,11 @@ export default function ChatPage() {
 
     setActiveChat(chat);
     setImagePreview(chat.imageUrl);
+    const typeMap = {
+      captioning: "Captioning",
+      grounding: "Grounding",
+      vqa: "VQA",
+    };
     const formattedMessages = chat.responses.map((r) => ({
       id: r._id,
       query: r.prompt,
@@ -201,7 +206,7 @@ export default function ChatPage() {
         typeof r.response === "string"
           ? r.response
           : JSON.stringify(r.response, null, 2),
-      category: r.type,
+      category: typeMap[r.type?.toLowerCase()] ?? "Captioning",
       timestamp: r.timestamp,
       error: false,
     }));
@@ -296,7 +301,7 @@ export default function ChatPage() {
           setSelectedCategory={setSelectedCategory}
         />
       </div>
-      <AppFooter />
+      {/* <AppFooter /> */}
       {/* Routines Modal */}
       <RoutinesModal
         open={isRoutinesOpen}
