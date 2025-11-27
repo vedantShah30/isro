@@ -34,32 +34,9 @@ export default function ChatPage() {
   const [inputMessage, setInputMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Captioning");
   const [currentImage, setCurrentImage] = useState(null);
-
-  const saveChatToDB = async ({ imageUrl, responses, routineId }) => {
-    try {
-      const res = await fetch("/api/chats/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageUrl,
-          responses,
-          routineId,
-          metadata: {
-            uploadedAt: new Date(),
-            processingTime: 1000, // example
-            imageSize: "1024x1024",
-          },
-        }),
-      });
-
-      const data = await res.json();
-      console.log("Chat Saved:", data);
-
-      return data;
-    } catch (err) {
-      console.error("Save Chat Error:", err);
-    }
-  };
+  const [userChats, setUserChats] = useState([]);
+  const [isChatListOpen, setIsChatListOpen] = useState(false);
+  const [activeChat, setActiveChat] = useState(null);
 
 const sendMessage = async (message, category) => {
   if (!message.trim()) return;
@@ -116,7 +93,8 @@ const sendMessage = async (message, category) => {
       );
       return;
     }
-    const savedResponse = data.chat.responses[0].response;
+    const responsesArray = data.chat.responses;
+    const savedResponse = responsesArray[responsesArray.length - 1].response;
 
     setChatHistory((prev) =>
       prev.map((c) =>
@@ -125,6 +103,9 @@ const sendMessage = async (message, category) => {
           : c
       )
     );
+    if(activeChat){
+      setActiveChat(data.chat);
+    }
   } catch (err) {
     setChatHistory((prev) =>
       prev.map((c) =>
@@ -153,13 +134,35 @@ const sendMessage = async (message, category) => {
   if (!session) return null;
 
   const handleImageSelect = (file, preview) => {
-    if(currentImage && preview !== currentImage){
+    if(activeChat){
+      setActiveChat(null);
+    }
+    else if(currentImage && preview !== currentImage){
       window.location.reload();
       return;
     }
     setSelectedImage(file);
     setImagePreview(preview);
     setCurrentImage(preview);
+  };
+
+  const openChat = (chat) => {
+    setCurrentImage(null);
+    setActiveChat(chat);
+    setImagePreview(chat.imageUrl);
+    const formattedMessages = chat.responses.map((r) => ({
+      id: r._id,
+      query: r.prompt,
+      response:
+        typeof r.response === "string"
+          ? r.response
+          : JSON.stringify(r.response, null, 2),
+      category: r.type,
+      timestamp: r.timestamp,
+      error: false,
+    }));
+    setChatHistory(formattedMessages);
+    setIsChatListOpen(false);
   };
 
   const loadUserChats = async () => {
@@ -174,8 +177,8 @@ const sendMessage = async (message, category) => {
         console.error("Error fetching chats:", data.error);
         return;
       }
-
-      console.log("User Chats:", data.chats);
+      setUserChats(data.chats);
+      setIsChatListOpen(true);
     } catch (err) {
       console.error("Failed to load chats:", err);
     }
@@ -302,8 +305,26 @@ const sendMessage = async (message, category) => {
           </motion.div>
           <ChatSection chatHistory={chatHistory} />
         </div>
-        {/* Bottom centered query input */}
+        {isChatListOpen && (
+          <div className="fixed right-0 top-0 h-full w-80 bg-[#0f1720] border-l border-cyan-800/20 p-4 overflow-y-auto z-50">
+            <h2 className="text-xl font-bold mb-4 text-cyan-400">Your Chats</h2>
+
+            {userChats.map((chat) => (
+              <div
+                key={chat._id}
+                className="p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer mb-2"
+                onClick={() => openChat(chat)}
+              >
+                <p className="font-semibold">{chat.title}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(chat.createdAt).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
+      {/* Bottom centered query input */}
       <div className="relative z-30 mb-24 text-center">
         <Promptbox
           value={inputMessage}

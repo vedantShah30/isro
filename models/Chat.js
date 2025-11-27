@@ -28,6 +28,10 @@ const ChatSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    title: {
+      type: String,
+      required: true,
+    },
     imageUrl: {
       type: String,
       required: true, // Satellite image URL for this chat session

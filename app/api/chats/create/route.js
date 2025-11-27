@@ -42,6 +42,7 @@ export async function POST(req) {
     if(!chat){
       chat = await Chat.create({
         user: session.user.id,
+        title: "chat_" + Date.now(),
         imageUrl,
         routine: routineId ?? null,
         responses,
