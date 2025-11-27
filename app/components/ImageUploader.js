@@ -1,14 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 
-export default function ImageUploader({ onImageSelect }) {
+export default function ImageUploader({ onImageSelect, externalImage }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (externalImage) {
+      setPreview(externalImage);
+    }
+  }, [externalImage]);
 
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();

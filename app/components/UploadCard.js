@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import ImageUploader from "./ImageUploader";
 
-export default function UploadCard({ onImageSelect }) {
+export default function UploadCard({ onImageSelect, imagePreview}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -14,7 +14,10 @@ export default function UploadCard({ onImageSelect }) {
       <div className="h-full flex flex-col">
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-[520px]">
-            <ImageUploader onImageSelect={onImageSelect} />
+            <ImageUploader
+              onImageSelect={onImageSelect}
+              externalImage={imagePreview}
+            />
           </div>
         </div>
       </div>
