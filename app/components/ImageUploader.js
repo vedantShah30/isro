@@ -2,33 +2,54 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 export default function ImageUploader({ onImageSelect }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleFileSelect = (file) => {
-    if (file && (file.type === "image/png" || file.type === "image/jpeg")) {
-      setSelectedImage(file);
+  const uploadToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-        onImageSelect?.(file, reader.result);
-      };
-      reader.readAsDataURL(file);
+    setUploading(true);
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setUploading(false);
+
+    if (!data.success) {
+      console.error("Cloudinary upload failed:", data.error);
+      return null;
     }
+    return data.url; // Cloudinary URL
+  };
+
+  const processFile = async (file) => {
+    if (!file) return;
+
+    if (file.type !== "image/png" && file.type !== "image/jpeg") return;
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      setPreview(reader.result);
+      const cloudUrl = await uploadToCloudinary(file);
+      if (cloudUrl) {
+        onImageSelect?.(file, cloudUrl);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-
-    const file = e.dataTransfer.files[0];
-    handleFileSelect(file);
+    processFile(e.dataTransfer.files[0]);
   };
 
   const handleDragOver = (e) => {
@@ -36,9 +57,7 @@ export default function ImageUploader({ onImageSelect }) {
     setIsDragging(true);
   };
 
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
+  const handleDragLeave = () => setIsDragging(false);
 
   return (
     <motion.div
@@ -51,7 +70,7 @@ export default function ImageUploader({ onImageSelect }) {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !uploading && fileInputRef.current?.click()}
         className={`
           relative text-center cursor-pointer transition-all duration-300 rounded-lg
           ${
@@ -67,9 +86,9 @@ export default function ImageUploader({ onImageSelect }) {
           ref={fileInputRef}
           type="file"
           accept="image/png, image/jpeg"
-          onChange={(e)=>{
-            const file = e.target.files[0];
-            handleFileSelect(file);
+          disabled={uploading}
+          onChange={(e) => {
+            processFile(e.target.files[0]);
             e.target.value = "";
           }}
           className="hidden"
@@ -77,7 +96,7 @@ export default function ImageUploader({ onImageSelect }) {
 
         {preview ? (
           <div>
-            <div className="relative w-full h-[300px] rounded-lg overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-[300px] rounded-lg overflow-hidden">
               <img
                 src={preview}
                 alt="Preview"
@@ -85,22 +104,29 @@ export default function ImageUploader({ onImageSelect }) {
               />
             </div>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedImage(null);
-                setPreview(null);
-                onImageSelect?.(null, null);
-                fileInputRef.current?.click();
-              }}
-              className="text-sm mt-2 text-blue-400 hover:text-blue-300"
-            >
-              Change Image
-            </button>
+            {uploading && (
+              <p className="text-blue-400 mt-2 text-sm">Uploading...</p>
+            )}
+
+            {!uploading && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImage(null);
+                  setPreview(null);
+                  onImageSelect?.(null, null);
+                  fileInputRef.current?.click();
+                }}
+                className="text-sm mt-2 text-blue-400 hover:text-blue-300"
+              >
+                Change Image
+              </button>
+            )}
           </div>
         ) : (
           <>
-            <div className="space-y-4">
+            {/* Original Upload UI */}
+            <div className="space-y-4 opacity-90">
               <svg
                 className="w-12 h-12 mx-auto text-[#242424] bg-slate-500/50 rounded-lg p-2"
                 xmlns="http://www.w3.org/2000/svg"
@@ -113,19 +139,8 @@ export default function ImageUploader({ onImageSelect }) {
                 />
               </svg>
 
-              <div>
-                <p className="text-slate-300 mb-1">
-                  Drag and drop or click to upload
-                </p>
-                <p className="text-xs text-slate-500">
-                  PNG or JPG (Max 2K×2K, 0.5-10m/pixel)
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 text-xs text-slate-400">
-              <div>supports: text/cc</div>
-              <div className="mt-1">maximum file size of 10mb</div>
+              <p className="text-slate-300">Drag and drop or click to upload</p>
+              <p className="text-xs text-slate-500">PNG or JPG (max 10MB)</p>
             </div>
           </>
         )}

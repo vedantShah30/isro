@@ -158,16 +158,16 @@ export default function ChatPage() {
 
   if (!session) return null;
 
-  const handleImageSelect = (file, preview) => {
+  const handleImageSelect = (file, cloudUrl) => {
     if (activeChat) {
       setActiveChat(null);
-    } else if (currentImage && preview !== currentImage) {
+    } else if (currentImage && cloudUrl !== currentImage) {
       window.location.reload();
       return;
     }
     setSelectedImage(file);
-    setImagePreview(preview);
-    setCurrentImage(preview);
+    setImagePreview(cloudUrl);
+    setCurrentImage(cloudUrl);
   };
 
   const loadUserChats = async () => {
