@@ -34,6 +34,29 @@ export default function ChatPage() {
   const [userChats, setUserChats] = useState([]);
   const [isChatListOpen, setIsChatListOpen] = useState(false);
   const [activeChat, setActiveChat] = useState(null);
+  const [reloadChats, setReloadChats] = useState(false);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const preload = async () => {
+      try {
+        const res = await fetch("/api/chats/get", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setUserChats(data.chats);
+        }
+      } catch (err) {
+        console.error("Failed to preload chats:", err);
+      }
+    };
+
+    preload();
+  }, [session, reloadChats]);
 
   const sendMessage = async (message, category) => {
     if (!message.trim()) return;
@@ -107,6 +130,7 @@ export default function ChatPage() {
       if (activeChat) {
         setActiveChat(data.chat);
       }
+      setReloadChats((prev) => !prev);
     } catch (err) {
       setChatHistory((prev) =>
         prev.map((c) =>
@@ -198,7 +222,7 @@ export default function ChatPage() {
 
       <Sidebar
         onOpenRoutines={() => setIsRoutinesOpen(true)}
-        onOpenChats={loadUserChats}
+        onOpenChats={() => setIsChatListOpen(true)}
       />
 
       {/* Main content area */}
