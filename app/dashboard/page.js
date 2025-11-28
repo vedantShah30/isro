@@ -25,11 +25,44 @@ export default function Dashboard() {
       return;
     }
 
-    if (session) {
-      // TODO: Fetch user's chats and routines from API
-      // For now, using placeholder data
-      setLoading(false);
+    const abortCtrl = new AbortController();
+
+    async function loadUserData() {
+      try {
+        setLoading(true);
+
+        if (!session) return;
+
+        // Fetch chats from your server route
+        const res = await fetch('/api/chats/get', {
+          method: 'GET',
+          signal: abortCtrl.signal,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          // credentials are included by browser by default on same-origin requests
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          setChats(data.chats || []);
+          console.log(chats);
+        } else {
+          console.error('Failed to load chats:', data?.error || res.statusText);
+        }
+
+        // TODO: fetch routines similarly when you have a routines endpoint
+      } catch (err) {
+        if (err.name !== 'AbortError') console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
+
+    loadUserData();
+
+    return () => abortCtrl.abort();
   }, [session, status, router]);
 
   if (status === 'loading' || loading) {
@@ -109,8 +142,8 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <motion.div
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -125,7 +158,7 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-          </motion.div>
+          </motion.div> */}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -196,8 +229,9 @@ export default function Dashboard() {
                     <div className="flex items-center space-x-3">
                       <img src={chat.imageUrl} alt="Chat" className="w-12 h-12 rounded object-cover" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white truncate">{chat.responses?.[0]?.prompt || 'Untitled Chat'}</p>
-                        <p className="text-xs text-slate-400">{new Date(chat.createdAt).toLocaleDateString()}</p>
+                        <p className="text-sm font-bold text-white truncate">{chat.title || 'Untitled Chat'}</p>
+                        <p className="text-sm text-slate-400 truncate" style={{ opacity: 0.7 }}>{chat.responses?.[0]?.prompt || 'Untitled Chat'}{chat.responses?.[0]?.prompt?.length > 30 ? '...' : ''}</p>
+                        {/* <p className="text-xs text-slate-400">{new Date(chat.createdAt).toLocaleDateString()}</p> */}
                       </div>
                     </div>
                   </div>
