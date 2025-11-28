@@ -226,14 +226,16 @@ export default function Dashboard() {
                     key={chat._id || index}
                     className="p-4 bg-slate-800/50 hover:bg-slate-800/70 border border-slate-700/50 rounded-lg cursor-pointer transition-all"
                   >
-                    <div className="flex items-center space-x-3">
+                    <Link href={`/chat/${chat._id}`}>
+                      <div className="flex items-center space-x-3">
                       <img src={chat.imageUrl} alt="Chat" className="w-12 h-12 rounded object-cover" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-white truncate">{chat.title || 'Untitled Chat'}</p>
                         <p className="text-sm text-slate-400 truncate" style={{ opacity: 0.7 }}>{chat.responses?.[0]?.prompt || 'Untitled Chat'}{chat.responses?.[0]?.prompt?.length > 30 ? '...' : ''}</p>
                         {/* <p className="text-xs text-slate-400">{new Date(chat.createdAt).toLocaleDateString()}</p> */}
                       </div>
-                    </div>
+                      </div>
+                    </Link>
                   </div>
                 ))}
               </div>
