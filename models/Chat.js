@@ -57,6 +57,29 @@ const ChatSchema = new mongoose.Schema(
   }
 );
 
+//Calculating total images count 
+ChatSchema.pre('save', async function (next) {
+  try {
+    if (this.isNew) {
+      // increment user's totalImages atomically
+      await mongoose.model('User').updateOne({ _id: this.user }, { $inc: { totalImages: 1 } });
+    }
+    next();
+  } catch (err) {
+    console.log(err)
+  }
+});
+
+ChatSchema.post('findOneAndDelete', async function (doc) {
+  if (!doc) return;
+  try {
+    // decrement user's totalImages atomically
+    await mongoose.model('User').updateOne({ _id: doc.user }, { $inc: { totalImages: -1 } });
+  } catch (err) {
+   console.error(err);
+  }
+});
+
 // Indexes for faster queries
 ChatSchema.index({ user: 1, createdAt: -1 });
 ChatSchema.index({ routine: 1 });

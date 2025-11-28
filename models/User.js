@@ -20,19 +20,23 @@ const UserSchema = new mongoose.Schema(
     },
     googleProviderId: {
       type: String,
-      required: true,
+      required: true, 
       unique: true,
     },
     isTooltip: {
       type: Boolean,
       default: true, // Show tooltips for new users
     },
+    totalImages: {
+      type:Number,
+      default:0,
+      index: true
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt
   }
 );
-
 // Index for faster queries
 // UserSchema.index({ email: 1 });
 // UserSchema.index({ googleProviderId: 1 });
