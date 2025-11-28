@@ -1,92 +1,21 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Dummy data matching Routine schema
-const DUMMY_ROUTINES = [
-  {
-    _id: '1',
-    title: 'Standard Analysis Routine',
-    description: 'Basic satellite image analysis workflow',
-    isActive: true,
-    usageCount: 24,
-    prompts: [
-      {
-        type: 'captioning',
-        prompt: 'Hello GeonNL, can you describe the attached image?',
-        order: 1,
-      },
-      {
-        type: 'vqa',
-        prompt: 'Can you describe me the image I uploaded?',
-        order: 2,
-      },
-      {
-        type: 'grounding',
-        prompt: 'Identify and locate all buildings in the image',
-        order: 3,
-      },
-    ],
-  },
-  {
-    _id: '2',
-    title: 'Urban Planning Survey',
-    description: 'Comprehensive urban area analysis',
-    isActive: true,
-    usageCount: 18,
-    prompts: [
-      {
-        type: 'captioning',
-        prompt: 'Provide a detailed description of the urban area',
-        order: 1,
-      },
-      {
-        type: 'grounding',
-        prompt: 'Locate all roads and intersections',
-        order: 2,
-      },
-      {
-        type: 'vqa',
-        prompt: 'What is the estimated population density?',
-        order: 3,
-      },
-      {
-        type: 'vqa',
-        prompt: 'Are there any green spaces or parks visible?',
-        order: 4,
-      },
-    ],
-  },
-  {
-    _id: '3',
-    title: 'Agricultural Assessment',
-    description: 'Farm and crop analysis',
-    isActive: false,
-    usageCount: 7,
-    prompts: [
-      {
-        type: 'captioning',
-        prompt: 'Describe the agricultural features in this image',
-        order: 1,
-      },
-      {
-        type: 'vqa',
-        prompt: 'What types of crops can you identify?',
-        order: 2,
-      },
-    ],
-  },
-];
-
-export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES }) {
+export default function RoutinesModal({
+  open,
+  onClose,
+  onSelectRoutine,
+  routines = [],
+}) {
   const [selectedRoutine, setSelectedRoutine] = useState(null);
   const [selectedPrompts, setSelectedPrompts] = useState([]);
   const [editedPrompts, setEditedPrompts] = useState({});
 
   useEffect(() => {
     function handleEscape(e) {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (selectedRoutine) {
           setSelectedRoutine(null);
           setSelectedPrompts([]);
@@ -96,8 +25,8 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
       }
     }
     if (open) {
-      window.addEventListener('keydown', handleEscape);
-      return () => window.removeEventListener('keydown', handleEscape);
+      window.addEventListener("keydown", handleEscape);
+      return () => window.removeEventListener("keydown", handleEscape);
     }
   }, [open, onClose, selectedRoutine]);
 
@@ -115,9 +44,7 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
 
   const togglePrompt = (index) => {
     setSelectedPrompts((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : [...prev, index]
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
     );
   };
 
@@ -133,7 +60,8 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
       ...selectedRoutine.prompts[i],
       prompt: editedPrompts[i] || selectedRoutine.prompts[i].prompt,
     }));
-    console.log('Running selected prompts:', selectedData);
+    console.log("Running selected prompts:", selectedData);
+    onSelectRoutine?.(selectedData, selectedRoutine);
     onClose?.();
   };
 
@@ -182,14 +110,14 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
                     </svg>
                   </button>
                 )}
-                <div className='text-center'>
+                <div className="text-center">
                   <h3 className="text-2xl font-bold text-white">
-                    {selectedRoutine ? selectedRoutine.title : 'Routines'}
+                    {selectedRoutine ? selectedRoutine.title : "Routines"}
                   </h3>
                   <p className="text-sm text-slate-400 mt-1">
                     {selectedRoutine
-                      ? 'Select the required prompts to run the routine'
-                      : 'Save and reuse groups of prompts for faster analysis'}
+                      ? "Select the required prompts to run the routine"
+                      : "Save and reuse groups of prompts for faster analysis"}
                   </p>
                 </div>
                 <button
@@ -247,7 +175,7 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <p className="font-medium text-white truncate">
-                            {routine.title || 'Untitled Routine'}
+                            {routine.title || "Untitled Routine"}
                           </p>
                           <span className="text-xs text-slate-500 flex-shrink-0">
                             {(routine.prompts || []).length} prompts
@@ -287,8 +215,8 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
                         <div
                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                             selectedPrompts.includes(idx)
-                              ? ''
-                              : 'border-slate-500 bg-transparent'
+                              ? ""
+                              : "border-slate-500 bg-transparent"
                           }`}
                         >
                           {selectedPrompts.includes(idx) && (
@@ -301,8 +229,14 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
                       <div className="flex-1">
                         <input
                           type="text"
-                          value={editedPrompts[idx] !== undefined ? editedPrompts[idx] : prompt.prompt}
-                          onChange={(e) => handlePromptEdit(idx, e.target.value)}
+                          value={
+                            editedPrompts[idx] !== undefined
+                              ? editedPrompts[idx]
+                              : prompt.prompt
+                          }
+                          onChange={(e) =>
+                            handlePromptEdit(idx, e.target.value)
+                          }
                           className="w-full bg-transparent text-slate-200 outline-none border-none focus:text-white"
                           placeholder="Enter prompt"
                         />
@@ -323,7 +257,8 @@ export default function RoutinesModal({ open, onClose, routines = DUMMY_ROUTINES
               <div className="  px-6 py-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-400">
-                    {selectedPrompts.length} of {selectedRoutine.prompts.length} prompts selected
+                    {selectedPrompts.length} of {selectedRoutine.prompts.length}{" "}
+                    prompts selected
                   </p>
                   <div className="flex gap-3">
                     <button

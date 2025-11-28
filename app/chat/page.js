@@ -12,7 +12,9 @@ import AppFooter from "../components/AppFooter";
 import Promptbox from "../components/Promptbox";
 import ChatSection from "../components/ChatSection";
 import RoutinesModal from "../components/RoutinesModal";
-import ChatListItem from "../components/ChatListItem"; 
+import SaveRoutineModal from "../components/SaveRoutineModal";
+import Toast from "../components/Toast";
+import ChatListItem from "../components/ChatListItem";
 
 const Scene3D = dynamic(() => import("../components/Scene3D"), {
   ssr: false,
@@ -37,6 +39,12 @@ export default function ChatPage() {
   const [isChatListOpen, setIsChatListOpen] = useState(false);
   const [activeChat, setActiveChat] = useState(null);
   const [reloadChats, setReloadChats] = useState(false);
+  const [userRoutines, setUserRoutines] = useState([]);
+  const [reloadRoutines, setReloadRoutines] = useState(false);
+  const [isSaveRoutineModalOpen, setIsSaveRoutineModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success");
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -59,6 +67,28 @@ export default function ChatPage() {
 
     preload();
   }, [session, reloadChats]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const loadRoutines = async () => {
+      try {
+        const res = await fetch("/api/routines/get", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setUserRoutines(data.routines);
+        }
+      } catch (err) {
+        console.error("Failed to load routines:", err);
+      }
+    };
+
+    loadRoutines();
+  }, [session, reloadRoutines]);
 
   const sendMessage = async (message, category) => {
     if (!message.trim()) return;
@@ -223,6 +253,67 @@ export default function ChatPage() {
     }, 50);
   };
 
+  const saveCurrentChatAsRoutine = async (
+    routineTitle,
+    routineDescription = ""
+  ) => {
+    if (chatHistory.length === 0) {
+      throw new Error("No chat history to save");
+    }
+
+    try {
+      const prompts = chatHistory.map((msg, idx) => ({
+        type: msg.category.toLowerCase(),
+        prompt: msg.query,
+        order: idx + 1,
+      }));
+
+      const res = await fetch("/api/routines/create", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: routineTitle,
+          description: routineDescription,
+          prompts,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to save routine");
+      }
+
+      setReloadRoutines((prev) => !prev);
+      setIsSaveRoutineModalOpen(false);
+      setToastMessage(`Routine "${routineTitle}" saved successfully!`);
+      setToastType("success");
+      setShowToast(true);
+    } catch (err) {
+      console.error("Error saving routine:", err);
+      setToastMessage(err.message || "Failed to save routine");
+      setToastType("error");
+      setShowToast(true);
+      throw err;
+    }
+  };
+
+  const handleSelectRoutine = (selectedPrompts, routine) => {
+    console.log("Routine selected:", routine);
+    console.log("Selected prompts:", selectedPrompts);
+    // You can implement logic here to auto-fill or run the prompts
+  };
+
+  const handleSaveRoutineClick = () => {
+    if (chatHistory.length === 0) {
+      alert("No chat history to save as routine");
+      return;
+    }
+
+    setIsSaveRoutineModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen text-white overflow-hidden relative bg-black ">
       <Scene3D />
@@ -230,6 +321,7 @@ export default function ChatPage() {
       <Sidebar
         onOpenRoutines={() => setIsRoutinesOpen(true)}
         onOpenChats={() => setIsChatListOpen(true)}
+        onSaveRoutine={handleSaveRoutineClick}
       />
 
       {/* Main content area */}
@@ -309,7 +401,7 @@ export default function ChatPage() {
         )}
       </main>
       {/* Bottom centered query input */}
-      <div className="relative z-30 text-center">
+      <div className="relative z-10 text-center">
         <Promptbox
           value={inputMessage}
           onChange={(v) => setInputMessage(v)}
@@ -323,6 +415,24 @@ export default function ChatPage() {
       <RoutinesModal
         open={isRoutinesOpen}
         onClose={() => setIsRoutinesOpen(false)}
+        routines={userRoutines}
+        onSelectRoutine={handleSelectRoutine}
+      />
+
+      {/* Save Routine Modal */}
+      <SaveRoutineModal
+        open={isSaveRoutineModalOpen}
+        onClose={() => setIsSaveRoutineModalOpen(false)}
+        onSave={saveCurrentChatAsRoutine}
+        promptCount={chatHistory.length}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        isOpen={showToast}
+        duration={3500}
       />
     </div>
   );
