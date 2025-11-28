@@ -1,221 +1,67 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import ChatListItem from "../../components/ChatListItem";
-import ChatSection from "../../components/ChatSection";
+import { motion } from "framer-motion";
+import Sidebar from "../../components/Sidebar";
+import UploadCard from "../../components/UploadCard";
+import AppFooter from "../../components/AppFooter";
 import Promptbox from "../../components/Promptbox";
+import ChatSection from "../../components/ChatSection";
 import RoutinesModal from "../../components/RoutinesModal";
 import SaveRoutineModal from "../../components/SaveRoutineModal";
-import Sidebar from "../../components/Sidebar";
 import Toast from "../../components/Toast";
-import UploadCard from "../../components/UploadCard";
+import ChatListItem from "../../components/ChatListItem";
 
 const Scene3D = dynamic(() => import("../../components/Scene3D"), {
   ssr: false,
   loading: () => <div className="fixed inset-0 -z-10 bg-black" />,
 });
 
-export default function ChatDetailPage() {
+export default function ChatPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const params = useParams();
-  const chatId = params?.id;
-  const [userChats, setUserChats] = useState([]);
-  const [chat, setChat] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [imageUrl, setImageUrl] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [results, setResults] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isRoutinesOpen, setIsRoutinesOpen] = useState(false);
+  const [routines, setRoutines] = useState([]);
+
   const [chatHistory, setChatHistory] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Captioning");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [currentImage, setCurrentImage] = useState(null);
+  const [userChats, setUserChats] = useState([]);
   const [isChatListOpen, setIsChatListOpen] = useState(false);
   const [activeChat, setActiveChat] = useState(null);
+  const [reloadChats, setReloadChats] = useState(false);
   const [userRoutines, setUserRoutines] = useState([]);
   const [reloadRoutines, setReloadRoutines] = useState(false);
   const [isSaveRoutineModalOpen, setIsSaveRoutineModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
   const [showToast, setShowToast] = useState(false);
-  const [isRoutinesOpen, setIsRoutinesOpen] = useState(false);
-  const [reloadChats, setReloadChats] = useState(false);
 
-  const fetchChatData = useCallback(async () => {
-    if (!chatId) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const res = await fetch(`/api/chats/${chatId}/get`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setError(data.error || "Failed to fetch chat");
-        return;
-      }
-
-      const chatData = data.chats;
-
-      if (!chatData) {
-        setError("Chat not found");
-        return;
-      }
-
-      setChat(chatData);
-      setActiveChat(chatData);
-      setImageUrl(chatData.imageUrl);
-
-      // Format chat history from responses
-      if (chatData.responses && chatData.responses.length > 0) {
-        const typeMap = {
-          captioning: "Captioning",
-          grounding: "Grounding",
-          vqa: "VQA",
-        };
-
-        const formattedMessages = chatData.responses.map((r) => ({
-          id: r._id || Date.now() + Math.random(),
-          query: r.prompt || "",
-          response:
-            typeof r.response === "string"
-              ? r.response
-              : JSON.stringify(r.response, null, 2),
-          category: typeMap[r.type?.toLowerCase()] || "Captioning",
-          timestamp: r.timestamp || new Date(),
-        }));
-
-        setChatHistory(formattedMessages);
-      }
-    } catch (err) {
-      console.error("Error fetching chat:", err);
-      setError("Failed to load chat");
-    } finally {
-      setLoading(false);
-    }
-  }, [chatId]);
-
-  const sendMessage = async (message, category) => {
-    if (!message.trim() || !imageUrl) return;
-
-    const msg = message.trim();
-    const tempId = Date.now();
-
-    // Temporary UI message
-    const tempChat = {
-      id: tempId,
-      query: msg,
-      response: "Processing...",
-      timestamp: new Date(),
-      category,
-      error: false,
-    };
-
-    setChatHistory((prev) => [...prev, tempChat]);
-    setInputMessage("");
-
-    try {
-      setIsAnalyzing(true);
-
-      // Update chat with new response
-      const res = await fetch("/api/chats/update", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageUrl: imageUrl,
-          routineId: null,
-          responses: [
-            {
-              type: category.toLowerCase(),
-              prompt: msg,
-              response: `This is placeholder response for ${msg} this will be replaced soon`,
-            },
-          ],
-          metadata: {
-            uploadedAt: chat?.metadata?.uploadedAt || new Date(),
-            processingTime: 0,
-            imageSize: chat?.metadata?.imageSize || "1024x1024",
-          },
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setChatHistory((prev) =>
-          prev.map((c) =>
-            c.id === tempId
-              ? {
-                  ...c,
-                  response: data.error || "Error saving chat",
-                  error: true,
-                }
-              : c
-          )
-        );
-        return;
-      }
-
-      const responsesArray = data.chat.responses;
-      const savedResponse = responsesArray[responsesArray.length - 1].response;
-
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.id === tempId
-            ? { ...c, response: JSON.stringify(savedResponse, null, 2) }
-            : c
-        )
-      );
-
-      // Update chat state without refetching
-      setChat(data.chat);
-      setActiveChat(data.chat);
-      setReloadChats((prev) => !prev);
-    } catch (err) {
-      setChatHistory((prev) =>
-        prev.map((c) =>
-          c.id === tempId ? { ...c, response: err.message, error: true } : c
-        )
-      );
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-      return;
-    }
-
-    if (status === "loading" || !chatId) {
-      return;
-    }
-
-    fetchChatData();
-  }, [status, chatId, router, fetchChatData]);
-
-  // Preload user chats for sidebar
   useEffect(() => {
     if (!session) return;
 
-    const preloadChats = async () => {
+    const preload = async () => {
       try {
-        const res = await fetch("/api/chats/get", {
+        const { id } = router.query;
+        if (!id) return;
+        
+        const res = await fetch(`/api/chats/${id}/get`, {
           method: "GET",
           credentials: "include",
         });
 
         const data = await res.json();
         if (data.success) {
+            console.log(data);
           setUserChats(data.chats);
         }
       } catch (err) {
@@ -223,10 +69,9 @@ export default function ChatDetailPage() {
       }
     };
 
-    preloadChats();
+    preload();
   }, [session, reloadChats]);
 
-  // Load routines
   useEffect(() => {
     if (!session) return;
 
@@ -249,37 +94,116 @@ export default function ChatDetailPage() {
     loadRoutines();
   }, [session, reloadRoutines]);
 
-  if (status === "loading" || loading) {
+  const sendMessage = async (message, category) => {
+    if (!message.trim()) return;
+
+    const msg = message.trim();
+
+    const tempId = Date.now();
+
+    // temporary UI message
+    const tempChat = {
+      id: tempId,
+      query: msg,
+      response: "Processing...",
+      timestamp: new Date(),
+      category,
+      error: false,
+    };
+
+    setChatHistory((prev) => [...prev, tempChat]);
+    setInputMessage("");
+
+    try {
+      const res = await fetch("/api/chats/create", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: imagePreview,
+          routineId: null,
+          responses: [
+            {
+              type: category.toLowerCase(),
+              prompt: msg,
+              response: `This is placeholder response for ${msg} this will be replaced soon`,
+            },
+          ],
+          metadata: {
+            uploadedAt: new Date(),
+            processingTime: 0,
+            imageSize: "1024x1024",
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.id === tempId
+              ? {
+                  ...c,
+                  response: data.error || "Error saving chat",
+                  error: true,
+                }
+              : c
+          )
+        );
+        return;
+      }
+      const responsesArray = data.chat.responses;
+      const savedResponse = responsesArray[responsesArray.length - 1].response;
+
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempId
+            ? { ...c, response: JSON.stringify(savedResponse, null, 2) }
+            : c
+        )
+      );
+      if (activeChat) {
+        setActiveChat(data.chat);
+      }
+      setReloadChats((prev) => !prev);
+    } catch (err) {
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempId ? { ...c, response: err.message, error: true } : c
+        )
+      );
+    }
+  };
+  const handleSendMessage = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    sendMessage(inputMessage, selectedCategory);
+  };
+
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/");
+  }, [status, router]);
+
+  if (status === "loading") {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-cyan-400 text-xl">Loading chat...</div>
+        <div className="text-cyan-400 text-xl">Loading...</div>
       </div>
     );
   }
 
-  if (!session) {
-    return null;
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-400 text-xl mb-4">{error}</div>
-          <button
-            onClick={() => router.push("/chat")}
-            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
-          >
-            Go Back to Chat
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!session) return null;
 
   const handleImageSelect = (file, cloudUrl) => {
-    // Handle image selection if needed
-    setImageUrl(cloudUrl);
+    if (activeChat) {
+      setActiveChat(null);
+    } else if (currentImage && cloudUrl !== currentImage) {
+      window.location.reload();
+      return;
+    }
+    setSelectedImage(file);
+    setImagePreview(cloudUrl);
+    setCurrentImage(cloudUrl);
   };
 
   const loadUserChats = async () => {
@@ -301,9 +225,36 @@ export default function ChatDetailPage() {
     }
   };
 
-  const openChat = (selectedChat) => {
-    // Navigate to the selected chat's page
-    router.push(`/chat/${selectedChat._id}`);
+  const openChat = (chat) => {
+    setCurrentImage(null);
+
+    setActiveChat(chat);
+    setImagePreview(chat.imageUrl);
+    const typeMap = {
+      captioning: "Captioning",
+      grounding: "Grounding",
+      vqa: "VQA",
+    };
+    const formattedMessages = chat.responses.map((r) => ({
+      id: r._id,
+      query: r.prompt,
+      response:
+        typeof r.response === "string"
+          ? r.response
+          : JSON.stringify(r.response, null, 2),
+      category: typeMap[r.type?.toLowerCase()] ?? "Captioning",
+      timestamp: r.timestamp,
+      error: false,
+    }));
+
+    setChatHistory(formattedMessages);
+    setIsChatListOpen(false);
+    setTimeout(() => {
+      const chatContainer = document.getElementById("chat-container");
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }, 50);
   };
 
   const saveCurrentChatAsRoutine = async (
@@ -368,25 +319,23 @@ export default function ChatDetailPage() {
   };
 
   return (
-    <div className="min-h-screen text-white overflow-hidden relative bg-black">
+    <div className="min-h-screen text-white overflow-hidden relative bg-black ">
       <Scene3D />
 
       <Sidebar
         onOpenRoutines={() => setIsRoutinesOpen(true)}
-        onOpenChats={loadUserChats}
+        onOpenChats={() => setIsChatListOpen(true)}
         onSaveRoutine={handleSaveRoutineClick}
       />
 
       {/* Main content area */}
       <main className="relative z-20 ml-20">
         <div className="max-w-7xl mx-auto px-6 pt-9 flex gap-8">
-          {/* Left - Image box */}
-          <UploadCard
+          {/* Left - big upload card */}
+          {/* <UploadCard
             onImageSelect={handleImageSelect}
-            imagePreview={imageUrl}
-          />
-
-          {/* Right - Chat Section */}
+            imagePreview={imagePreview}
+          /> */}
           <ChatSection chatHistory={chatHistory} />
         </div>
         {isChatListOpen && (
@@ -434,19 +383,19 @@ export default function ChatDetailPage() {
                   const data = await res.json();
                   if (data.success) setReloadChats((prev) => !prev);
                 }}
-                onDelete={async (chatIdToDelete) => {
+                onDelete={async (chatId) => {
                   const res = await fetch("/api/chats/delete", {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ chatId: chatIdToDelete }),
+                    body: JSON.stringify({ chatId }),
                   });
                   const data = await res.json();
                   if (data.success) {
                     setReloadChats((prev) => !prev);
-                    if (activeChat?._id === chatIdToDelete || chatId === chatIdToDelete) {
-                      // If deleting current chat, redirect to chat page
-                      router.push("/chat");
+                    if (activeChat?._id === chatId) {
+                      setActiveChat(null);
+                      setChatHistory([]);
                     }
                   }
                 }}
@@ -455,8 +404,7 @@ export default function ChatDetailPage() {
           </div>
         )}
       </main>
-
-      {/* Bottom - Searchbox/Promptbox */}
+      {/* Bottom centered query input */}
       <div className="relative z-10 text-center">
         <Promptbox
           value={inputMessage}
@@ -466,6 +414,7 @@ export default function ChatDetailPage() {
           setSelectedCategory={setSelectedCategory}
         />
       </div>
+      {/* <AppFooter /> */}
       {/* Routines Modal */}
       <RoutinesModal
         open={isRoutinesOpen}
