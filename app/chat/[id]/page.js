@@ -1,0 +1,443 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
+import Sidebar from "../../components/Sidebar";
+import UploadCard from "../../components/UploadCard";
+import AppFooter from "../../components/AppFooter";
+import Promptbox from "../../components/Promptbox";
+import ChatSection from "../../components/ChatSection";
+import RoutinesModal from "../../components/RoutinesModal";
+import SaveRoutineModal from "../../components/SaveRoutineModal";
+import Toast from "../../components/Toast";
+import ChatListItem from "../../components/ChatListItem";
+
+const Scene3D = dynamic(() => import("../../components/Scene3D"), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 -z-10 bg-black" />,
+});
+
+export default function ChatPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [results, setResults] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isRoutinesOpen, setIsRoutinesOpen] = useState(false);
+  const [routines, setRoutines] = useState([]);
+
+  const [chatHistory, setChatHistory] = useState([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Captioning");
+  const [currentImage, setCurrentImage] = useState(null);
+  const [userChats, setUserChats] = useState([]);
+  const [isChatListOpen, setIsChatListOpen] = useState(false);
+  const [activeChat, setActiveChat] = useState(null);
+  const [reloadChats, setReloadChats] = useState(false);
+  const [userRoutines, setUserRoutines] = useState([]);
+  const [reloadRoutines, setReloadRoutines] = useState(false);
+  const [isSaveRoutineModalOpen, setIsSaveRoutineModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success");
+  const [showToast, setShowToast] = useState(false);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const preload = async () => {
+      try {
+        const { id } = router.query;
+        if (!id) return;
+        
+        const res = await fetch(`/api/chats/${id}/get`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            console.log(data);
+          setUserChats(data.chats);
+        }
+      } catch (err) {
+        console.error("Failed to preload chats:", err);
+      }
+    };
+
+    preload();
+  }, [session, reloadChats]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const loadRoutines = async () => {
+      try {
+        const res = await fetch("/api/routines/get", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setUserRoutines(data.routines);
+        }
+      } catch (err) {
+        console.error("Failed to load routines:", err);
+      }
+    };
+
+    loadRoutines();
+  }, [session, reloadRoutines]);
+
+  const sendMessage = async (message, category) => {
+    if (!message.trim()) return;
+
+    const msg = message.trim();
+
+    const tempId = Date.now();
+
+    // temporary UI message
+    const tempChat = {
+      id: tempId,
+      query: msg,
+      response: "Processing...",
+      timestamp: new Date(),
+      category,
+      error: false,
+    };
+
+    setChatHistory((prev) => [...prev, tempChat]);
+    setInputMessage("");
+
+    try {
+      const res = await fetch("/api/chats/create", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: imagePreview,
+          routineId: null,
+          responses: [
+            {
+              type: category.toLowerCase(),
+              prompt: msg,
+              response: `This is placeholder response for ${msg} this will be replaced soon`,
+            },
+          ],
+          metadata: {
+            uploadedAt: new Date(),
+            processingTime: 0,
+            imageSize: "1024x1024",
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.id === tempId
+              ? {
+                  ...c,
+                  response: data.error || "Error saving chat",
+                  error: true,
+                }
+              : c
+          )
+        );
+        return;
+      }
+      const responsesArray = data.chat.responses;
+      const savedResponse = responsesArray[responsesArray.length - 1].response;
+
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempId
+            ? { ...c, response: JSON.stringify(savedResponse, null, 2) }
+            : c
+        )
+      );
+      if (activeChat) {
+        setActiveChat(data.chat);
+      }
+      setReloadChats((prev) => !prev);
+    } catch (err) {
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempId ? { ...c, response: err.message, error: true } : c
+        )
+      );
+    }
+  };
+  const handleSendMessage = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    sendMessage(inputMessage, selectedCategory);
+  };
+
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/");
+  }, [status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-cyan-400 text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  const handleImageSelect = (file, cloudUrl) => {
+    if (activeChat) {
+      setActiveChat(null);
+    } else if (currentImage && cloudUrl !== currentImage) {
+      window.location.reload();
+      return;
+    }
+    setSelectedImage(file);
+    setImagePreview(cloudUrl);
+    setCurrentImage(cloudUrl);
+  };
+
+  const loadUserChats = async () => {
+    try {
+      const res = await fetch("/api/chats/get", {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        console.error("Error fetching chats:", data.error);
+        return;
+      }
+      setUserChats(data.chats);
+      setIsChatListOpen(true);
+    } catch (err) {
+      console.error("Failed to load chats:", err);
+    }
+  };
+
+  const openChat = (chat) => {
+    setCurrentImage(null);
+
+    setActiveChat(chat);
+    setImagePreview(chat.imageUrl);
+    const typeMap = {
+      captioning: "Captioning",
+      grounding: "Grounding",
+      vqa: "VQA",
+    };
+    const formattedMessages = chat.responses.map((r) => ({
+      id: r._id,
+      query: r.prompt,
+      response:
+        typeof r.response === "string"
+          ? r.response
+          : JSON.stringify(r.response, null, 2),
+      category: typeMap[r.type?.toLowerCase()] ?? "Captioning",
+      timestamp: r.timestamp,
+      error: false,
+    }));
+
+    setChatHistory(formattedMessages);
+    setIsChatListOpen(false);
+    setTimeout(() => {
+      const chatContainer = document.getElementById("chat-container");
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }, 50);
+  };
+
+  const saveCurrentChatAsRoutine = async (
+    routineTitle,
+    routineDescription = ""
+  ) => {
+    if (chatHistory.length === 0) {
+      throw new Error("No chat history to save");
+    }
+
+    try {
+      const prompts = chatHistory.map((msg, idx) => ({
+        type: msg.category.toLowerCase(),
+        prompt: msg.query,
+        order: idx + 1,
+      }));
+
+      const res = await fetch("/api/routines/create", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: routineTitle,
+          description: routineDescription,
+          prompts,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to save routine");
+      }
+
+      setReloadRoutines((prev) => !prev);
+      setIsSaveRoutineModalOpen(false);
+      setToastMessage(`Routine "${routineTitle}" saved successfully!`);
+      setToastType("success");
+      setShowToast(true);
+    } catch (err) {
+      console.error("Error saving routine:", err);
+      setToastMessage(err.message || "Failed to save routine");
+      setToastType("error");
+      setShowToast(true);
+      throw err;
+    }
+  };
+
+  const handleSelectRoutine = (selectedPrompts, routine) => {
+    console.log("Routine selected:", routine);
+    console.log("Selected prompts:", selectedPrompts);
+    // You can implement logic here to auto-fill or run the prompts
+  };
+
+  const handleSaveRoutineClick = () => {
+    if (chatHistory.length === 0) {
+      alert("No chat history to save as routine");
+      return;
+    }
+
+    setIsSaveRoutineModalOpen(true);
+  };
+
+  return (
+    <div className="min-h-screen text-white overflow-hidden relative bg-black ">
+      <Scene3D />
+
+      <Sidebar
+        onOpenRoutines={() => setIsRoutinesOpen(true)}
+        onOpenChats={() => setIsChatListOpen(true)}
+        onSaveRoutine={handleSaveRoutineClick}
+      />
+
+      {/* Main content area */}
+      <main className="relative z-20 ml-20">
+        <div className="max-w-7xl mx-auto px-6 pt-9 flex gap-8">
+          {/* Left - big upload card */}
+          {/* <UploadCard
+            onImageSelect={handleImageSelect}
+            imagePreview={imagePreview}
+          /> */}
+          <ChatSection chatHistory={chatHistory} />
+        </div>
+        {isChatListOpen && (
+          <div className="fixed right-0 top-0 h-full w-80 bg-[#0f1720] border-l border-cyan-800/20 p-4 overflow-y-auto z-50 shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-cyan-400">Your Chats</h2>
+
+              <button
+                onClick={() => setIsChatListOpen(false)}
+                className="text-gray-300 hover:text-white transition"
+              >
+                {/* Close Icon */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Chat list */}
+            {userChats.map((chat) => (
+              <ChatListItem
+                key={chat._id}
+                chat={chat}
+                isActive={activeChat?._id === chat._id}
+                onOpenChat={openChat}
+                onRename={async (chatId, newTitle) => {
+                  const res = await fetch("/api/chats/update-title", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chatId, title: newTitle }),
+                  });
+                  const data = await res.json();
+                  if (data.success) setReloadChats((prev) => !prev);
+                }}
+                onDelete={async (chatId) => {
+                  const res = await fetch("/api/chats/delete", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chatId }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setReloadChats((prev) => !prev);
+                    if (activeChat?._id === chatId) {
+                      setActiveChat(null);
+                      setChatHistory([]);
+                    }
+                  }
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+      {/* Bottom centered query input */}
+      <div className="relative z-10 text-center">
+        <Promptbox
+          value={inputMessage}
+          onChange={(v) => setInputMessage(v)}
+          onSend={(message, category) => sendMessage(message, category)}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
+      </div>
+      {/* <AppFooter /> */}
+      {/* Routines Modal */}
+      <RoutinesModal
+        open={isRoutinesOpen}
+        onClose={() => setIsRoutinesOpen(false)}
+        routines={userRoutines}
+        onSelectRoutine={handleSelectRoutine}
+      />
+
+      {/* Save Routine Modal */}
+      <SaveRoutineModal
+        open={isSaveRoutineModalOpen}
+        onClose={() => setIsSaveRoutineModalOpen(false)}
+        onSave={saveCurrentChatAsRoutine}
+        promptCount={chatHistory.length}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        isOpen={showToast}
+        duration={3500}
+      />
+    </div>
+  );
+}
