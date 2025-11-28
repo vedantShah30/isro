@@ -401,7 +401,7 @@ export default function ChatPage() {
         )}
       </main>
       {/* Bottom centered query input */}
-      <div className="relative z-30 text-center">
+      <div className="relative z-10 text-center">
         <Promptbox
           value={inputMessage}
           onChange={(v) => setInputMessage(v)}
