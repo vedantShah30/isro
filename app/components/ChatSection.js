@@ -49,10 +49,10 @@ export default function ChatSection({
     : chatHistory.filter(chat => chat.category === activeTab);
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#0f1720] border border-cyan-700/10 rounded-2xl overflow-hidden min-h-[420px] shadow-lg">
+    <div className="w-full h-[65vh] flex flex-col bg-[#0f1720] border border-cyan-700/10 rounded-2xl overflow-hidden min-h-[420px] shadow-lg">
       {/* Tabs Section */}
-      <div className="flex items-center justify-center px-6 py-4 border-b border-cyan-700/10">
-        <div className="flex space-x-6 text-sm">
+      <div className="flex items-center justify-center py-1 border-b border-cyan-700/10">
+        <div className="flex space-x-4 text-sm">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -88,20 +88,20 @@ export default function ChatSection({
               {/* User Query - Right Side */}
               <div className="flex flex-col items-end">
                 {/* Category Label */}
-                <span className="text-xs text-blue-400 mb-1.5 px-2 font-medium">
+                <span className="text-xs text-blue-400 mb-0.5 px-2 font-medium">
                   {chat.category}
                 </span>
                 {/* Query Bubble */}
-                <div className="bg-blue-600 text-white px-5 py-3 rounded-lg max-w-[75%] shadow-md">
+                <div className="bg-blue-600 text-white px-2 py-1.5 rounded-lg max-w-[75%] shadow-md">
                   <p className="text-sm leading-relaxed">{chat.query}</p>
                 </div>
               </div>
 
               {/* AI Response - Left Side */}
               {chat.response ? (
-                <div className="flex flex-col items-start mt-2">
-                  <div className="bg-black text-white px-5 py-4 rounded-lg max-w-[90%] border border-black shadow-lg">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                <div className="flex flex-col mt-2">
+                  <div className="bg-black text-white px-2 py-1.5 rounded-lg border border-black shadow-lg">
+                    <p className="text-sm leading-relaxed">
                       {chat.response}
                     </p>
                   </div>

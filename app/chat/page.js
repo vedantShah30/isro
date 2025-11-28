@@ -232,7 +232,7 @@ export default function ChatPage() {
 
       {/* Main content area */}
       <main className="relative z-20 ml-20">
-        <div className="max-w-7xl mx-auto px-6 py-10 flex gap-8">
+        <div className="max-w-7xl mx-auto px-6 pt-9 flex gap-8">
           {/* Left - big upload card */}
           <UploadCard
             onImageSelect={handleImageSelect}
@@ -295,7 +295,7 @@ export default function ChatPage() {
         )}
       </main>
       {/* Bottom centered query input */}
-      <div className="relative z-30 mb-24 text-center">
+      <div className="relative z-30 text-center">
         <Promptbox
           value={inputMessage}
           onChange={(v) => setInputMessage(v)}
