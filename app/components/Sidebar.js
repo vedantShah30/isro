@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 
-export default function Sidebar({ onOpenRoutines, onOpenChats }) {
+export default function Sidebar({
+  onOpenRoutines,
+  onOpenChats,
+  onSaveRoutine,
+}) {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-20 bg-[#0b1116] border-r border-cyan-600/10 flex flex-col items-center justify-between py-6 space-y-6 z-30">
       <div className="space-y-5">
@@ -27,6 +31,7 @@ export default function Sidebar({ onOpenRoutines, onOpenChats }) {
         <button
           onClick={() => onOpenRoutines?.()}
           className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors"
+          title="View Routines"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -41,6 +46,28 @@ export default function Sidebar({ onOpenRoutines, onOpenChats }) {
               stroke="#0A0F19"
               stroke-linecap="round"
             />
+          </svg>
+        </button>
+
+        <button
+          onClick={() => onSaveRoutine?.()}
+          className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors"
+          title="Save current chat as routine"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
           </svg>
         </button>
 
