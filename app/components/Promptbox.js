@@ -76,7 +76,12 @@ const Promptbox = ({
               className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-base"
             />
             <button
-              onClick={doSend}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                doSend();
+              }}
               className="ml-2 p-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 transition-all"
               aria-label="Send message"
             >
