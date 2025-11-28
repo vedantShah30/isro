@@ -12,6 +12,8 @@ import AppFooter from "../components/AppFooter";
 import Promptbox from "../components/Promptbox";
 import ChatSection from "../components/ChatSection";
 import RoutinesModal from "../components/RoutinesModal";
+import ChatListItem from "../components/ChatListItem"; 
+
 const Scene3D = dynamic(() => import("../components/Scene3D"), {
   ssr: false,
   loading: () => <div className="fixed inset-0 -z-10 bg-black" />,
@@ -269,28 +271,40 @@ export default function ChatPage() {
             </div>
 
             {/* Chat list */}
-            {userChats.map((chat) => {
-              const isActive = activeChat?._id === chat._id;
-              return (
-                <div
-                  key={chat._id}
-                  onClick={() => openChat(chat)}
-                  className={`
-                    p-3 rounded-lg mb-2 cursor-pointer transition-all border
-                    ${
-                      isActive
-                        ? "bg-cyan-900/40 border-cyan-500 shadow-lg"
-                        : "bg-white/5 border-transparent hover:bg-white/10"
+            {userChats.map((chat) => (
+              <ChatListItem
+                key={chat._id}
+                chat={chat}
+                isActive={activeChat?._id === chat._id}
+                onOpenChat={openChat}
+                onRename={async (chatId, newTitle) => {
+                  const res = await fetch("/api/chats/update-title", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chatId, title: newTitle }),
+                  });
+                  const data = await res.json();
+                  if (data.success) setReloadChats((prev) => !prev);
+                }}
+                onDelete={async (chatId) => {
+                  const res = await fetch("/api/chats/delete", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chatId }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setReloadChats((prev) => !prev);
+                    if (activeChat?._id === chatId) {
+                      setActiveChat(null);
+                      setChatHistory([]);
                     }
-                  `}
-                >
-                  <p className="font-semibold">{chat.title}</p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(chat.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              );
-            })}
+                  }
+                }}
+              />
+            ))}
           </div>
         )}
       </main>
