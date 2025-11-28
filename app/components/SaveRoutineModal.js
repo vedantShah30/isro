@@ -77,7 +77,7 @@ export default function SaveRoutineModal({
             {/* Header with gradient accent */}
             <div className="relative pt-8 pb-4 px-8">
               {/* Accent line */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-transparent" />
+              <div className="absolute top-0 left-0 right-0 h-1" />
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
