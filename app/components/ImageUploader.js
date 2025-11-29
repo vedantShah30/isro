@@ -9,9 +9,12 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+
   const [showModal, setShowModal] = useState(false);
   const [showCropperModal, setShowCropperModal] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState(null);
+
+  const [cropUploading, setCropUploading] = useState(false); // NEW
 
   const fileInputRef = useRef(null);
 
@@ -50,6 +53,7 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
     const reader = new FileReader();
     reader.onloadend = async () => {
       setPreview(reader.result);
+
       const cloudUrl = await uploadToCloudinary(file);
       if (cloudUrl) {
         onImageSelect?.(file, cloudUrl);
@@ -64,20 +68,14 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
     processFile(e.dataTransfer.files[0]);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => setIsDragging(false);
-
   const handleCropClick = () => {
     setTempImageForCrop(preview);
     setShowCropperModal(true);
   };
 
   const handleCropComplete = async (croppedImage) => {
-    // Upload cropped image to Cloudinary
+    setCropUploading(true);
+
     const blob = await fetch(croppedImage).then((res) => res.blob());
     const croppedFile = new File(
       [blob],
@@ -85,7 +83,6 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
       { type: blob.type }
     );
 
-    setUploading(true);
     const formData = new FormData();
     formData.append("file", croppedFile);
 
@@ -95,22 +92,21 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
     });
 
     const data = await res.json();
-    setUploading(false);
+    setCropUploading(false);
 
     if (!data.success) {
       console.error("Cloudinary upload failed:", data.error);
       return;
     }
+    console.log("Cropped image uploaded to: ", data.url);
 
-    // Console log the cropped image URL
-    console.log("Cropped Image URL:", data.url);
-    console.log("Cropped Image Data:", {
-      url: data.url,
-      base64: croppedImage,
-      timestamp: new Date().toISOString(),
-    });
+    // update preview
+    //setPreview(croppedImage);
 
-    // setPreview(croppedImage);
+    // notify parent - change this to see the preview of the image
+    //onImageSelect?.(croppedFile, data.url);
+    setShowCropperModal(false);
+    setTempImageForCrop(null);
   };
 
   return (
@@ -123,8 +119,11 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
       >
         <div
           onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
           onClick={() => {
             if (!preview && !uploading) fileInputRef.current?.click();
           }}
@@ -165,10 +164,6 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
                 />
               </div>
 
-              {uploading && (
-                <p className="text-blue-400 mt-2 text-sm">Uploading...</p>
-              )}
-
               {!uploading && (
                 <div className="flex gap-2 mt-2 justify-center">
                   <button
@@ -180,6 +175,7 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
                   >
                     Crop
                   </button>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -219,6 +215,7 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
           )}
         </div>
       </motion.div>
+
       {showModal && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
@@ -232,14 +229,18 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
           />
         </div>
       )}
+
       <ImageCropperModal
         open={showCropperModal}
         onClose={() => {
-          setShowCropperModal(false);
-          setTempImageForCrop(null);
+          if (!cropUploading) {
+            setShowCropperModal(false);
+            setTempImageForCrop(null);
+          }
         }}
         imageSrc={tempImageForCrop}
         onCropComplete={handleCropComplete}
+        loading={cropUploading}
       />
     </>
   );
