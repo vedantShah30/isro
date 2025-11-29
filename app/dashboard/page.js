@@ -1,11 +1,12 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { motion } from "framer-motion";
+import { signOut, useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
-import Link from "next/link";
+import Loader from "../components/Loader";
 
 const Scene3D = dynamic(() => import("../components/Scene3D"), {
   ssr: false,
@@ -70,11 +71,7 @@ export default function Dashboard() {
   }, [status]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-[#0B0E12] flex items-center justify-center">
-        <div className="text-[#00A6FB] text-lg">Loading dashboard...</div>
-      </div>
-    );
+    return <Loader />;
   }
 
   return (

@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import ChatListItem from "../../components/ChatListItem";
 import ChatSection from "../../components/ChatSection";
+import Loader from "../../components/Loader";
 import Promptbox from "../../components/Promptbox";
 import RoutinesModal from "../../components/RoutinesModal";
 import SaveRoutineModal from "../../components/SaveRoutineModal";
@@ -307,11 +308,7 @@ export default function ChatDetailPage() {
   }, [session, reloadRoutines]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-cyan-400 text-xl">Loading chat...</div>
-      </div>
-    );
+    return <Loader />;
   }
 
   if (!session) {
