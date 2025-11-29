@@ -47,8 +47,25 @@ export default function Dashboard() {
         setLoading(false);
       }
     }
+    async function loadRoutineData(){
+      try{
+        setLoading(true);
+        const res = await fetch('/api/routines/get',{
+          method:"GET",
+          signal: abortCtrl.signal,
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) setRoutines(data.routines || []);
+      }catch (err) {
+        if (err.name !== "AbortError") console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
 
     loadUserData();
+    loadRoutineData();
     return () => abortCtrl.abort();
   }, [status]);
 
@@ -189,7 +206,7 @@ export default function Dashboard() {
                 <p className="text-[#98C1D9]">No routines saved</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 h-96 overflow-y-auto pr-2">
                 {routines.map((routine, index) => (
                   <div
                     key={routine._id || index}
@@ -202,7 +219,7 @@ export default function Dashboard() {
                           {routine.prompts?.length || 0} prompts
                         </p>
                       </div>
-                      <span
+                      {/* <span
                         className={`px-2 py-1 text-xs rounded ${
                           routine.isActive
                             ? "bg-[#1D3B29] text-[#2ECC71]"
@@ -210,7 +227,7 @@ export default function Dashboard() {
                         }`}
                       >
                         {routine.isActive ? "Active" : "Inactive"}
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                 ))}
@@ -251,7 +268,7 @@ export default function Dashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 h-96 overflow-y-auto pr-2">
                 {chats.map((chat, index) => (
                   <Link
                     key={chat._id || index}

@@ -162,7 +162,7 @@ export default function ChatDetailPage() {
     if (category.toLowerCase() === "grounding") {
       // Add coordinates only for "grounding" responses
       GroundingCoordinates = [
-        { C0: { x: 100, y: 200 }, C1: { x: 200, y: 200 }, C2: { x: 200, y: 100 }, C3: { x: 100, y: 100 } },
+        { C0: { x: 100, y: 200 }, C1: { x: 200, y: 200 }, C2: { x: 200, y: 100 }, C3: { x: Math.floor(Math.random()*100+1), y: Math.floor(Math.random()*100+1) } },
         { C0: { x: 500, y: 700 }, C1: { x: 700, y: 700 }, C2: { x: 700, y: 500 }, C3: { x: 500, y: 500 } },
       ];
     }
@@ -345,6 +345,7 @@ export default function ChatDetailPage() {
     // If it's a grounding query, show its coordinates
     if (chatItem.category === "Grounding" && chatItem.coordinates && chatItem.coordinates.length > 0) {
       setCoordinates(chatItem.coordinates);
+      console.log(chatItem.coordinates);
       setSelectedCategory("Grounding");
     } else {
       // Clear coordinates for non-grounding queries
@@ -456,6 +457,7 @@ export default function ChatDetailPage() {
                 imagePreview={imageUrl}
                 showChangeImageButton={false}
                 coordinates={coordinates}
+              
                 setBoundingBox={Boolean(selectedQueryId && coordinates.length > 0 && selectedCategory === "Grounding")}
                 />
 
