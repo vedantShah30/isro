@@ -253,8 +253,8 @@ export default function Scene3D() {
         <OrbitControls 
           enableZoom={true}
           enablePan={false}
-          minDistance={8}
-          maxDistance={25}
+          minDistance={3}
+          maxDistance={13}
           autoRotate
           autoRotateSpeed={0.3}
         />
