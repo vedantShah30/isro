@@ -27,10 +27,51 @@ export default function Sidebar({
             </svg>
           </div>
         </Link>
-
+        {/* chat history */}
+        <button
+          className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center"
+          onClick={() => onOpenChats?.()}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="26"
+            height="26"
+            viewBox="0 0 29 29"
+            fill="none"
+          >
+            <path
+              d="M12.5 7.5C12.5 6.94772 12.9477 6.5 13.5 6.5C14.0523 6.5 14.5 6.94772 14.5 7.5V14.5H18.5C19.0523 14.5 19.5 14.9477 19.5 15.5C19.5 16.0523 19.0523 16.5 18.5 16.5H13.5C12.9477 16.5 12.5 16.0523 12.5 15.5V7.5ZM14.5 28.5C22.232 28.5 28.5 22.232 28.5 14.5C28.5 6.76801 22.232 0.5 14.5 0.5C6.76801 0.5 0.5 6.76801 0.5 14.5C0.5 22.232 6.76801 28.5 14.5 28.5ZM14.5 26.5C7.87258 26.5 2.5 21.1274 2.5 14.5C2.5 7.87258 7.87258 2.5 14.5 2.5C21.1274 2.5 26.5 7.87258 26.5 14.5C26.5 21.1274 21.1274 26.5 14.5 26.5Z"
+              fill="white"
+              stroke="#0A0F19"
+            />
+          </svg>
+        </button>
+        {/* save routine */}
+        <button
+          onClick={() => onSaveRoutine?.()}
+          className="w-10 h-10 rounded-lg flex items-center justify-center"
+          title="Save current chat as routine"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+        </button>
+        {/* open routines svg */}
         <button
           onClick={() => onOpenRoutines?.()}
-          className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors"
+          className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
           title="View Routines"
         >
           <svg
@@ -48,80 +89,21 @@ export default function Sidebar({
             />
           </svg>
         </button>
-
-        <button
-          onClick={() => onSaveRoutine?.()}
-          className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors"
-          title="Save current chat as routine"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-            <polyline points="17 21 17 13 7 13 7 21" />
-            <polyline points="7 3 7 8 15 8" />
-          </svg>
-        </button>
-
-        <button className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="28"
-            height="28"
-            viewBox="0 0 32 32"
-            fill="none"
-          >
-            <path
-              d="M8.70711 3.29289C9.09763 3.68342 9.09763 4.31658 8.70711 4.70711L5.41421 8H17.5C23.299 8 28 12.701 28 18.5C28 24.299 23.299 29 17.5 29C11.701 29 7 24.299 7 18.5C7 17.9477 7.44772 17.5 8 17.5C8.55228 17.5 9 17.9477 9 18.5C9 23.1944 12.8056 27 17.5 27C22.1944 27 26 23.1944 26 18.5C26 13.8056 22.1944 10 17.5 10H5.41421L8.70711 13.2929C9.09763 13.6834 9.09763 14.3166 8.70711 14.7071C8.31658 15.0976 7.68342 15.0976 7.29289 14.7071L2.29289 9.70711C1.90237 9.31658 1.90237 8.68342 2.29289 8.29289L7.29289 3.29289C7.68342 2.90237 8.31658 2.90237 8.70711 3.29289Z"
-              fill="white"
-              stroke="#0A0F19"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </button>
-
-        <button
-          className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center"
-          onClick={() => onOpenChats?.()}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 29 29"
-            fill="none"
-          >
-            <path
-              d="M12.5 7.5C12.5 6.94772 12.9477 6.5 13.5 6.5C14.0523 6.5 14.5 6.94772 14.5 7.5V14.5H18.5C19.0523 14.5 19.5 14.9477 19.5 15.5C19.5 16.0523 19.0523 16.5 18.5 16.5H13.5C12.9477 16.5 12.5 16.0523 12.5 15.5V7.5ZM14.5 28.5C22.232 28.5 28.5 22.232 28.5 14.5C28.5 6.76801 22.232 0.5 14.5 0.5C6.76801 0.5 0.5 6.76801 0.5 14.5C0.5 22.232 6.76801 28.5 14.5 28.5ZM14.5 26.5C7.87258 26.5 2.5 21.1274 2.5 14.5C2.5 7.87258 7.87258 2.5 14.5 2.5C21.1274 2.5 26.5 7.87258 26.5 14.5C26.5 21.1274 21.1274 26.5 14.5 26.5Z"
-              fill="white"
-              stroke="#0A0F19"
-            />
-          </svg>
-        </button>
       </div>
 
       {/* user svg */}
       <Link href="/dashboard">
-        <div className="mt-auto w-10 h-10 rounded-lg  flex items-center justify-center">
+        <div className="mt-auto w-10 h-10 rounded-lg flex items-center justify-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="32"
-            height="32"
+            width="26"
+            height="26"
             viewBox="0 0 32 32"
             fill="none"
           >
             <path
               d="M23 8.99998C23 12.866 19.866 16 16 16C12.134 16 9 12.866 9 8.99998C9 5.134 12.134 2 16 2C19.866 2 23 5.134 23 8.99998ZM21 8.99998C21 6.23857 18.7614 4 16 4C13.2386 4 11 6.23857 11 8.99998C11 11.7614 13.2386 14 16 14C18.7614 14 21 11.7614 21 8.99998ZM7.5 18C5.56696 18 3.99994 19.567 4 21.5001L4.00001 22C4.00003 24.3935 5.52264 26.4174 7.68492 27.7934C9.85906 29.177 12.8015 30 15.9999 30C19.1983 30 22.1408 29.177 24.315 27.7934C26.4773 26.4174 28 24.3935 28 22V21.5C28 19.567 26.433 18 24.5 18H7.5ZM6 21.5C5.99998 20.6716 6.67156 20 7.5 20H24.5C25.3284 20 26 20.6715 26 21.5V22C26 23.4725 25.0602 24.9486 23.2413 26.1061C21.4342 27.256 18.8767 28 15.9999 28C13.1232 28 10.5657 27.256 8.75867 26.1061C6.93978 24.9486 6.00001 23.4725 6.00001 22L6 21.5Z"
-              fill="#0468F9"
+              fill="#00B6DC"
             />
           </svg>
         </div>

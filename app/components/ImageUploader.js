@@ -185,7 +185,7 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="backdrop-blur-md bg-slate-900/40 border border-slate-700/50 rounded-lg p-4"
+        className="backdrop-blur-md bg-slate-900/40 rounded-lg"
       >
         <div
           onDrop={handleDrop}
@@ -203,7 +203,7 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
               !preview
                 ? isDragging
                   ? "border-2 border-dashed border-blue-500 bg-blue-500/10 p-12"
-                  : "border-2 border-dashed border-slate-600 hover:border-slate-500 bg-slate-800/30 p-12"
+                  : "border-2 border-dashed border-slate-600 hover:border-slate-500 bg-slate-800/30"
                 : "border-none bg-transparent p-0"
             }
           `}
@@ -222,11 +222,11 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
 
           {preview ? (
             <div>
-              <div className="relative w-full h-[300px] rounded-lg overflow-hidden">
+              <div className="relative h-[350px] rounded-lg overflow-hidden">
                 <img
                   src={preview}
                   alt="Preview"
-                  className="w-full h-full object-contain cursor-pointer"
+                  className=" object-contain cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowModal(true);
@@ -243,7 +243,7 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
                       e.stopPropagation();
                       handleCropClick();
                     }}
-                    className="text-xs px-3 py-1 bg-blue-500/20 border border-blue-400 text-blue-400 hover:bg-blue-500/30 rounded transition-colors"
+                    className="text-sm px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-md transition-colors"
                   >
                     Crop
                   </button>

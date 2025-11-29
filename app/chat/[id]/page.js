@@ -450,17 +450,22 @@ export default function ChatDetailPage() {
       <main className="relative z-20 ml-20">
         <div className="max-w-7xl mx-auto px-6 pt-9 flex gap-8">
           {/* Left - Image box */}
+          <div className="w-[800px] flex items-center justify-center">
+            <UploadCard
+              onImageSelect={handleImageSelect}
+              imagePreview={imageUrl}
+              showChangeImageButton={false}
+              coordinates={coordinates}
+              setBoundingBox={Boolean(
+                selectedQueryId &&
+                  coordinates.length > 0 &&
+                  selectedCategory === "Grounding"
+              )}
+            />
+          </div>
 
-                <UploadCard
-                onImageSelect={handleImageSelect}
-                imagePreview={imageUrl}
-                showChangeImageButton={false}
-                coordinates={coordinates}
-                setBoundingBox={Boolean(selectedQueryId && coordinates.length > 0 && selectedCategory === "Grounding")}
-                />
-
-                {/* Right - Chat Section */}
-          <ChatSection 
+          {/* Right - Chat Section */}
+          <ChatSection
             chatHistory={chatHistory}
             onQueryClick={handleQueryClick}
             selectedQueryId={selectedQueryId}
@@ -547,8 +552,6 @@ export default function ChatDetailPage() {
         />
       </div>
 
-
-      
       {/* Routines Modal */}
       <RoutinesModal
         open={isRoutinesOpen}
