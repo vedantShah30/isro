@@ -10,10 +10,14 @@ import { useEffect, useRef, useState } from 'react';
  * Displays user queries (right side, blue bubbles) and AI responses (left side, dark boxes).
  * 
  * @param {Object} props - Component props
- * @param {Array} props.chatHistory - Array of chat objects: [{ id?: number, query: string, response: string, category: 'Captioning'|'Grounding'|'VQA', timestamp?: Date }]
+ * @param {Array} props.chatHistory - Array of chat objects: [{ id?: number, query: string, response: string, category: 'Captioning'|'Grounding'|'VQA', timestamp?: Date, coordinates?: Array }]
+ * @param {Function} props.onQueryClick - Callback function when a query is clicked: (chat: Object) => void
+ * @param {String} props.selectedQueryId - ID of the currently selected query
  */
 export default function ChatSection({ 
-  chatHistory = []
+  chatHistory = [],
+  onQueryClick = null,
+  selectedQueryId = null
 }) {
   const [activeTab, setActiveTab] = useState('All');
   const chatEndRef = useRef(null);
@@ -47,6 +51,12 @@ export default function ChatSection({
   const filteredChatHistory = activeTab === 'All' 
     ? chatHistory 
     : chatHistory.filter(chat => chat.category === activeTab);
+
+  const handleQueryClick = (chat) => {
+    if (onQueryClick && typeof onQueryClick === 'function') {
+      onQueryClick(chat);
+    }
+  };
 
   return (
     <div className="w-full h-[65vh] flex flex-col bg-[#0f1720] border border-cyan-700/10 rounded-2xl overflow-hidden min-h-[420px] shadow-lg">
@@ -92,9 +102,19 @@ export default function ChatSection({
                   {chat.category}
                 </span>
                 {/* Query Bubble */}
-                <div className="bg-blue-600 text-white px-2 py-1.5 rounded-lg max-w-[75%] shadow-md">
+                        <button 
+                          className={`bg-blue-600 text-white px-2 py-1.5 rounded-lg max-w-[75%] shadow-md transition-all cursor-pointer focus:outline-none ${
+                          selectedQueryId === chat.id 
+                            ? 'ring-2 ring-cyan-400 ring-offset-transparent' 
+                            : 'hover:bg-blue-700'
+                          }`}
+                          onClick={(e) => {
+                    e.stopPropagation();
+                    handleQueryClick(chat);
+                  }}
+                >
                   <p className="text-sm leading-relaxed">{chat.query}</p>
-                </div>
+                </button>
               </div>
 
               {/* AI Response - Left Side */}

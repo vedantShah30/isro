@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import ImageUploader from "./ImageUploader";
+import { useState } from "react";
 
-export default function UploadCard({ onImageSelect, imagePreview}) {
+export default function UploadCard({ onImageSelect, imagePreview,showChangeImageButton,coordinates =[],setBoundingBox}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -17,6 +18,9 @@ export default function UploadCard({ onImageSelect, imagePreview}) {
             <ImageUploader
               onImageSelect={onImageSelect}
               externalImage={imagePreview}
+              showChangeImageButton = {showChangeImageButton}
+              coordinates = {coordinates}
+              setBoundingBox={setBoundingBox}
             />
           </div>
         </div>

@@ -15,6 +15,26 @@ const ResponseSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed, // Can be string, object, or array depending on type
     required: true,
   },
+   coordinates: [
+    {
+      C0: {
+        x: { type: Number, required: true, default: 10 },  // Dummy x value for C0
+        y: { type: Number, required: true, default: 20 },  // Dummy y value for C0
+      },
+      C1: {
+        x: { type: Number, required: true, default: 50 },  // Dummy x value for C1
+        y: { type: Number, required: true, default: 50 },  // Dummy y value for C1
+      },
+      C2: {
+        x: { type: Number, required: true, default: 100 },  // Dummy x value for C2
+        y: { type: Number, required: true, default: 100 },  // Dummy y value for C2
+      },
+      C3: {
+        x: { type: Number, required: true, default: 150 },  // Dummy x value for C3
+        y: { type: Number, required: true, default: 150 },  // Dummy y value for C3
+      },
+    },
+  ],
   timestamp: {
     type: Date,
     default: Date.now,

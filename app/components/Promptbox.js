@@ -21,7 +21,7 @@ const Promptbox = ({
   };
 
   const isCategoryControlled =
-    typeof selectedCategory !== "undefined" &&
+    typeof selectedCategory !== "undefined" && 
     typeof setSelectedCategory === "function";
   const currentCategory = isCategoryControlled
     ? selectedCategory
