@@ -3,8 +3,11 @@
 import { motion } from "framer-motion";
 import ImageUploader from "./ImageUploader";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function UploadCard({ onImageSelect, imagePreview,showChangeImageButton,coordinates =[],setBoundingBox}) {
+  const pathname = usePathname();
+  const isChatDetailPage = /^\/chat\/[^/]+$/.test(pathname);
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}

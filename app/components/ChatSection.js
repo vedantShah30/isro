@@ -102,43 +102,38 @@ export default function ChatSection({
                   {chat.category}
                 </span>
                 {/* Query Bubble */}
-                        <button 
-                          className={`bg-blue-600 text-white px-2 py-1.5 rounded-lg max-w-[75%] shadow-md transition-all cursor-pointer focus:outline-none ${
-                          selectedQueryId === chat.id 
-                            ? 'ring-2 ring-cyan-400 ring-offset-transparent' 
-                            : 'hover:bg-blue-700'
-                          }`}
-                          onClick={(e) => {
+                <button
+                  className={`bg-blue-600 text-white px-2 py-3 rounded-lg max-w-[75%] shadow-md transition-all cursor-pointer focus:outline-none ${
+                    selectedQueryId === chat.id
+                      ? "ring-2 ring-cyan-400 ring-offset-transparent"
+                      : "hover:bg-blue-700"
+                  }`}
+                  onClick={(e) => {
                     e.stopPropagation();
                     handleQueryClick(chat);
                   }}
                 >
-                  <p className="text-sm leading-relaxed">{chat.query}</p>
+                  <p className="leading-relaxed text-left">{chat.query}</p>
                 </button>
               </div>
 
               {/* AI Response - Left Side */}
               {chat.response ? (
-                <div className="flex flex-col mt-2">
-                  <div className="bg-black text-white px-2 py-1.5 rounded-lg border border-black shadow-lg">
-                    <p className="text-sm leading-relaxed">
-                      {chat.response}
-                    </p>
+                <div className="flex flex-col items-start">
+                  <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">
+                    <p className="leading-relaxed">{chat.response}</p>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-start mt-2">
-                  <div className="bg-black text-white px-5 py-4 rounded-lg max-w-[90%] border border-black shadow-lg">
+                <div className="flex flex-col items-start">
+                  <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">
                     <div className="flex items-center space-x-2">
-                      <svg
-                        className="animate-spin h-4 w-4 text-cyan-400"
-                        viewBox="0 0 24 24"
-                      >
+                      <svg>
                         <circle
                           className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
+                          cx="14"
+                          cy="14"
+                          r="25"
                           stroke="currentColor"
                           strokeWidth="4"
                           fill="none"

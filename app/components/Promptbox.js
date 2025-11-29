@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 const Promptbox = ({
   value,
@@ -9,6 +9,8 @@ const Promptbox = ({
 }) => {
   const [internalValue, setInternalValue] = useState("");
   const [internalCategory, setInternalCategory] = useState("Captioning");
+
+  const textareaRef = useRef(null);
 
   const categories = ["Captioning", "Grounding", "VQA"];
 
@@ -21,11 +23,12 @@ const Promptbox = ({
   };
 
   const isCategoryControlled =
-    typeof selectedCategory !== "undefined" && 
+    typeof selectedCategory !== "undefined" &&
     typeof setSelectedCategory === "function";
   const currentCategory = isCategoryControlled
     ? selectedCategory
     : internalCategory;
+
   const changeCategory = (c) => {
     if (isCategoryControlled) setSelectedCategory(c);
     else setInternalCategory(c);
@@ -34,15 +37,26 @@ const Promptbox = ({
   const doSend = () => {
     const trimmed = (currentValue || "").trim();
     if (!trimmed) return;
+
     if (typeof onSend === "function") onSend(trimmed, currentCategory);
     else console.log("Send (no handler):", trimmed, currentCategory);
+
     if (!isControlled) setInternalValue("");
   };
 
-  const handleKeyPress = (e) => {
+  // Auto-expand textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+    }
+  }, [currentValue]);
+
+  const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      doSend();
+      e.preventDefault(); // stop newline
+      doSend(); // send
     }
   };
 
@@ -67,14 +81,17 @@ const Promptbox = ({
       <div className="relative">
         <div className="bg-gradient-to-r from-blue-500/5 to-cyan-500/5 backdrop-blur-xl border border-blue-400/20 rounded-xl p-1 shadow-2xl">
           <div className="relative flex items-center gap-3 bg-slate-900/40 rounded-lg px-4 py-3">
-            <input
-              type="text"
+            {/* MULTI-LINE TEXTAREA */}
+            <textarea
+              ref={textareaRef}
               value={currentValue}
               onChange={(e) => changeValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask anything"
-              className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-base"
+              onKeyDown={handleKeyDown}
+              placeholder="Ask anything..."
+              className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none resize-none overflow-hidden min-h-[40px]"
+              rows={1}
             />
+
             <button
               type="button"
               onClick={(e) => {

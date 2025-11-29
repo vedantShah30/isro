@@ -26,8 +26,7 @@ export default function ChatListItem({
           isActive
             ? "bg-cyan-900/40 border-cyan-500 shadow-lg"
             : "bg-white/5 border-transparent hover:bg-white/10"
-        }
-      `}
+        }`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
         setHovered(false);
@@ -35,16 +34,25 @@ export default function ChatListItem({
       }}
       onClick={() => !isRenaming && onOpenChat(chat)}
     >
-      {/* Title or rename input */}
+      {/* Title OR rename textarea */}
       {!isRenaming ? (
-        <p className="font-semibold">{chat.title}</p>
+        <p className="font-semibold break-words whitespace-normal">
+          {chat.title}
+        </p>
       ) : (
-        <input
-          className="w-full px-2 py-1 bg-black border border-cyan-700 rounded text-white mb-1"
+        <textarea
+          className="w-full px-2 py-1 bg-black border border-cyan-700 rounded text-white mb-1 resize-none break-words whitespace-normal"
           autoFocus
+          rows={2}
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleRenameSubmit()}
+          onKeyDown={(e) => {
+            // Submit on ENTER without SHIFT
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleRenameSubmit();
+            }
+          }}
           onBlur={handleRenameSubmit}
           onClick={(e) => e.stopPropagation()}
         />

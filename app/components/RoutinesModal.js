@@ -32,7 +32,7 @@ export default function RoutinesModal({
 
   const handleRoutineClick = (routine) => {
     setSelectedRoutine(routine);
-    setSelectedPrompts([]);
+    setSelectedPrompts(routine.prompts.map((_, i) => i));
     setEditedPrompts({});
   };
 
