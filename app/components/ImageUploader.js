@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import ImageCropperModal from "./ImageCropperModal";
 
 export default function ImageUploader({ onImageSelect, externalImage }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -9,6 +10,8 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showCropperModal, setShowCropperModal] = useState(false);
+  const [tempImageForCrop, setTempImageForCrop] = useState(null);
 
   const fileInputRef = useRef(null);
 
@@ -68,6 +71,48 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
 
   const handleDragLeave = () => setIsDragging(false);
 
+  const handleCropClick = () => {
+    setTempImageForCrop(preview);
+    setShowCropperModal(true);
+  };
+
+  const handleCropComplete = async (croppedImage) => {
+    // Upload cropped image to Cloudinary
+    const blob = await fetch(croppedImage).then((res) => res.blob());
+    const croppedFile = new File(
+      [blob],
+      selectedImage?.name || "cropped-image.jpg",
+      { type: blob.type }
+    );
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", croppedFile);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setUploading(false);
+
+    if (!data.success) {
+      console.error("Cloudinary upload failed:", data.error);
+      return;
+    }
+
+    // Console log the cropped image URL
+    console.log("Cropped Image URL:", data.url);
+    console.log("Cropped Image Data:", {
+      url: data.url,
+      base64: croppedImage,
+      timestamp: new Date().toISOString(),
+    });
+
+    // setPreview(croppedImage);
+  };
+
   return (
     <>
       <motion.div
@@ -125,18 +170,29 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
               )}
 
               {!uploading && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedImage(null);
-                    setPreview(null);
-                    onImageSelect?.(null, null);
-                    fileInputRef.current?.click();
-                  }}
-                  className="text-sm mt-2 text-blue-400 hover:text-blue-300"
-                >
-                  Change Image
-                </button>
+                <div className="flex gap-2 mt-2 justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCropClick();
+                    }}
+                    className="text-xs px-3 py-1 bg-blue-500/20 border border-blue-400 text-blue-400 hover:bg-blue-500/30 rounded transition-colors"
+                  >
+                    Crop
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage(null);
+                      setPreview(null);
+                      onImageSelect?.(null, null);
+                      fileInputRef.current?.click();
+                    }}
+                    className="text-sm text-blue-400 hover:text-blue-300"
+                  >
+                    Change Image
+                  </button>
+                </div>
               )}
             </div>
           ) : (
@@ -176,6 +232,15 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
           />
         </div>
       )}
+      <ImageCropperModal
+        open={showCropperModal}
+        onClose={() => {
+          setShowCropperModal(false);
+          setTempImageForCrop(null);
+        }}
+        imageSrc={tempImageForCrop}
+        onCropComplete={handleCropComplete}
+      />
     </>
   );
 }
