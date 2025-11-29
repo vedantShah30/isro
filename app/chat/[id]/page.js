@@ -42,6 +42,8 @@ export default function ChatDetailPage() {
   const [showToast, setShowToast] = useState(false);
   const [isRoutinesOpen, setIsRoutinesOpen] = useState(false);
   const [reloadChats, setReloadChats] = useState(false);
+  const [coordinates, setCoordinates] = useState([]);
+  const [selectedQueryId, setSelectedQueryId] = useState(null);
 
   const fetchChatData = useCallback(async () => {
     if (!chatId) return;
@@ -72,7 +74,24 @@ export default function ChatDetailPage() {
       setChat(chatData);
       setActiveChat(chatData);
       setImageUrl(chatData.imageUrl);
+      
+      // Extract coordinates from grounding responses
+      const coordinatesData = [];
+      if (chatData.responses && Array.isArray(chatData.responses)) {
+        chatData.responses.forEach((r) => {
+          if (r.type?.toLowerCase() === "grounding" && r.coordinates) {
+            // r.coordinates is an array, so we need to handle each coordinate box
+            if (Array.isArray(r.coordinates)) {
+              coordinatesData.push(...r.coordinates);
+            } else {
+              coordinatesData.push(r.coordinates);
+            }
+          }
+        });
+      }
 
+      // Don't set initial coordinates - only show when a query is clicked
+      setCoordinates([]);
       // Format chat history from responses
       if (chatData.responses && chatData.responses.length > 0) {
         const typeMap = {
@@ -81,16 +100,29 @@ export default function ChatDetailPage() {
           vqa: "VQA",
         };
 
-        const formattedMessages = chatData.responses.map((r) => ({
-          id: r._id || Date.now() + Math.random(),
-          query: r.prompt || "",
-          response:
-            typeof r.response === "string"
-              ? r.response
-              : JSON.stringify(r.response, null, 2),
-          category: typeMap[r.type?.toLowerCase()] || "Captioning",
-          timestamp: r.timestamp || new Date(),
-        }));
+        const formattedMessages = chatData.responses.map((r) => {
+          // Extract coordinates for this specific response
+          let responseCoordinates = [];
+          if (r.type?.toLowerCase() === "grounding" && r.coordinates) {
+            if (Array.isArray(r.coordinates)) {
+              responseCoordinates = r.coordinates;
+            } else {
+              responseCoordinates = [r.coordinates];
+            }
+          }
+
+          return {
+            id: r._id || Date.now() + Math.random(),
+            query: r.prompt || "",
+            response:
+              typeof r.response === "string"
+                ? r.response
+                : JSON.stringify(r.response, null, 2),
+            category: typeMap[r.type?.toLowerCase()] || "Captioning",
+            timestamp: r.timestamp || new Date(),
+            coordinates: responseCoordinates, // Store coordinates with each message
+          };
+        });
 
         setChatHistory(formattedMessages);
       }
@@ -116,6 +148,7 @@ export default function ChatDetailPage() {
       timestamp: new Date(),
       category,
       error: false,
+      coordinates: [], // Initialize with empty coordinates
     };
 
     setChatHistory((prev) => [...prev, tempChat]);
@@ -123,6 +156,16 @@ export default function ChatDetailPage() {
 
     try {
       setIsAnalyzing(true);
+      //Update the coordinates which you get from GROUNDING Model 
+      let GroundingCoordinates = [];
+
+    if (category.toLowerCase() === "grounding") {
+      // Add coordinates only for "grounding" responses
+      GroundingCoordinates = [
+        { C0: { x: 100, y: 200 }, C1: { x: 200, y: 200 }, C2: { x: 200, y: 100 }, C3: { x: 100, y: 100 } },
+        { C0: { x: 500, y: 700 }, C1: { x: 700, y: 700 }, C2: { x: 700, y: 500 }, C3: { x: 500, y: 500 } },
+      ];
+    }
 
       // Update chat with new response
       const res = await fetch("/api/chats/update", {
@@ -137,6 +180,7 @@ export default function ChatDetailPage() {
               type: category.toLowerCase(),
               prompt: msg,
               response: `This is placeholder response for ${msg} this will be replaced soon`,
+              coordinates:GroundingCoordinates
             },
           ],
           metadata: {
@@ -166,14 +210,27 @@ export default function ChatDetailPage() {
 
       const responsesArray = data.chat.responses;
       const savedResponse = responsesArray[responsesArray.length - 1].response;
+      const savedCoordinates = responsesArray[responsesArray.length - 1].coordinates || [];
 
+      // Update chat history with response and coordinates
       setChatHistory((prev) =>
         prev.map((c) =>
           c.id === tempId
-            ? { ...c, response: JSON.stringify(savedResponse, null, 2) }
+            ? { 
+                ...c, 
+                response: JSON.stringify(savedResponse, null, 2),
+                coordinates: category.toLowerCase() === "grounding" ? (savedCoordinates || []) : []
+              }
             : c
         )
       );
+
+      // If this is a grounding response with coordinates, automatically select it
+      if (category.toLowerCase() === "grounding" && savedCoordinates && savedCoordinates.length > 0) {
+        setSelectedQueryId(tempId);
+        setCoordinates(savedCoordinates);
+        setSelectedCategory("Grounding");
+      }
 
       // Update chat state without refetching
       setChat(data.chat);
@@ -267,7 +324,7 @@ export default function ChatDetailPage() {
         <div className="text-center">
           <div className="text-red-400 text-xl mb-4">{error}</div>
           <button
-            onClick={() => router.push("/chat")}
+            onClick={() => router.push("/image")}
             className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
           >
             Go Back to Chat
@@ -280,6 +337,19 @@ export default function ChatDetailPage() {
   const handleImageSelect = (file, cloudUrl) => {
     // Handle image selection if needed
     setImageUrl(cloudUrl);
+  };
+
+  const handleQueryClick = (chatItem) => {
+    setSelectedQueryId(chatItem.id);
+
+    // If it's a grounding query, show its coordinates
+    if (chatItem.category === "Grounding" && chatItem.coordinates && chatItem.coordinates.length > 0) {
+      setCoordinates(chatItem.coordinates);
+      setSelectedCategory("Grounding");
+    } else {
+      // Clear coordinates for non-grounding queries
+      setCoordinates([]);
+    }
   };
 
   const loadUserChats = async () => {
@@ -366,7 +436,6 @@ export default function ChatDetailPage() {
 
     setIsSaveRoutineModalOpen(true);
   };
-
   return (
     <div className="min-h-screen text-white overflow-hidden relative bg-black">
       <Scene3D />
@@ -381,13 +450,21 @@ export default function ChatDetailPage() {
       <main className="relative z-20 ml-20">
         <div className="max-w-7xl mx-auto px-6 pt-9 flex gap-8">
           {/* Left - Image box */}
-          <UploadCard
-            onImageSelect={handleImageSelect}
-            imagePreview={imageUrl}
-          />
 
-          {/* Right - Chat Section */}
-          <ChatSection chatHistory={chatHistory} />
+                <UploadCard
+                onImageSelect={handleImageSelect}
+                imagePreview={imageUrl}
+                showChangeImageButton={false}
+                coordinates={coordinates}
+                setBoundingBox={Boolean(selectedQueryId && coordinates.length > 0 && selectedCategory === "Grounding")}
+                />
+
+                {/* Right - Chat Section */}
+          <ChatSection 
+            chatHistory={chatHistory}
+            onQueryClick={handleQueryClick}
+            selectedQueryId={selectedQueryId}
+          />
         </div>
         {isChatListOpen && (
           <div className="fixed right-0 top-0 h-full w-80 bg-[#0f1720] border-l border-cyan-800/20 p-4 overflow-y-auto z-50 shadow-xl">
@@ -449,7 +526,7 @@ export default function ChatDetailPage() {
                       chatId === chatIdToDelete
                     ) {
                       // If deleting current chat, redirect to chat page
-                      router.push("/chat");
+                      router.push("/image");
                     }
                   }
                 }}
@@ -469,6 +546,9 @@ export default function ChatDetailPage() {
           setSelectedCategory={setSelectedCategory}
         />
       </div>
+
+
+      
       {/* Routines Modal */}
       <RoutinesModal
         open={isRoutinesOpen}

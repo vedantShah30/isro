@@ -3,8 +3,26 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import ImageCropperModal from "./ImageCropperModal";
+  const getVerticesFromBox = (box) => {
+    // Handle both array format and object format with C0, C1, C2, C3
+    let vertices = [];
+    
+    if (Array.isArray(box)) {
+      vertices = box;
+    } else if (box && typeof box === 'object') {
+      // If it's an object with C0, C1, C2, C3 keys
+      if (box.C0 && box.C1 && box.C2 && box.C3) {
+        vertices = [box.C0, box.C1, box.C2, box.C3];
+      } else {
+        // Try to extract any coordinate-like values
+        vertices = Object.values(box).filter(v => v && typeof v === 'object' && 'x' in v && 'y' in v);
+      }
+    }
+    
+    return vertices.filter(v => v && typeof v === 'object' && typeof v.x === 'number' && typeof v.y === 'number');
+  };
 
-export default function ImageUploader({ onImageSelect, externalImage }) {
+export default function ImageUploader({ onImageSelect, externalImage,showChangeImageButton=true ,coordinates =[],setBoundingBox=true}) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -108,6 +126,58 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
     setShowCropperModal(false);
     setTempImageForCrop(null);
   };
+  
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (preview) {
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.src = preview;
+    }
+  }, [preview]);
+
+  const renderBoundingBoxes = () => {
+    if (!coordinates || coordinates.length === 0 || !preview) return null;
+    
+    // If we don't have image dimensions yet, return null
+    if (imageDimensions.width === 0 || imageDimensions.height === 0) return null;
+
+    return (
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 10 }}
+        viewBox={`0 0 ${imageDimensions.width} ${imageDimensions.height}`}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {coordinates.map((box, index) => {
+          const vertices = getVerticesFromBox(box);
+          
+          if (vertices.length < 4) return null;
+
+          // Convert coordinates - if values are <= 1, assume normalized (0-1), else assume pixels
+          const isNormalized = vertices.some(v => v.x <= 1 && v.y <= 1);
+          const points = vertices.map(v => {
+            const x = isNormalized ? v.x * imageDimensions.width : v.x;
+            const y = isNormalized ? v.y * imageDimensions.height : v.y;
+            return `${x},${y}`;
+          }).join(' ');
+
+          return (
+            <polygon
+              key={index}
+              points={points}
+              fill="rgba(0, 238, 44, 0.15)"
+              stroke="#00EE2C"
+              strokeWidth="3"
+            />
+          );
+        })}
+      </svg>
+    );
+  };
 
   return (
     <>
@@ -162,10 +232,12 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
                     setShowModal(true);
                   }}
                 />
+                {/* Render bounding boxes overlay */}
+                {coordinates && coordinates.length > 0 && setBoundingBox && renderBoundingBoxes()}
               </div>
 
-              {!uploading && (
-                <div className="flex gap-2 mt-2 justify-center">
+              <div className="flex gap-2 mt-2 justify-center">
+              {!uploading  && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -175,21 +247,22 @@ export default function ImageUploader({ onImageSelect, externalImage }) {
                   >
                     Crop
                   </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedImage(null);
-                      setPreview(null);
-                      onImageSelect?.(null, null);
-                      fileInputRef.current?.click();
-                    }}
-                    className="text-sm text-blue-400 hover:text-blue-300"
-                  >
+              )}
+              {!uploading && showChangeImageButton&& (
+                <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImage(null);
+                  setPreview(null);
+                  onImageSelect?.(null, null);
+                  fileInputRef.current?.click();
+                }}
+                className="text-sm text-blue-400 hover:text-blue-300"
+                >
                     Change Image
                   </button>
-                </div>
               )}
+              </div>
             </div>
           ) : (
             <>
