@@ -128,15 +128,12 @@ export default function ChatSection({
                 <div className="flex flex-col items-start">
                   <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">
                     <div className="flex items-center space-x-2">
-                      <svg
-                        className="animate-spin h-4 w-4 text-cyan-400"
-                        viewBox="0 0 24 24"
-                      >
+                      <svg>
                         <circle
                           className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
+                          cx="14"
+                          cy="14"
+                          r="25"
                           stroke="currentColor"
                           strokeWidth="4"
                           fill="none"
