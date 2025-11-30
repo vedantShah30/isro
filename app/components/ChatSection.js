@@ -21,6 +21,12 @@ export default function ChatSection({
 }) {
   const [activeTab, setActiveTab] = useState('All');
   const chatEndRef = useRef(null);
+  const [localSelectedId, setLocalSelectedId] = useState(selectedQueryId);
+
+  // keep localSelectedId in sync with prop
+  useEffect(() => {
+    setLocalSelectedId(selectedQueryId);
+  }, [selectedQueryId]);
 
   // Scroll to bottom when new messages are added
   useEffect(() => {
@@ -87,7 +93,14 @@ export default function ChatSection({
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 chat-messages-area">
+      <div
+        className="flex-1 overflow-y-auto p-6 space-y-8 chat-messages-area"
+        onClick={() => {
+          // clicking the messages area (outside a query button) clears selection
+          setLocalSelectedId(null);
+          if (onQueryClick && typeof onQueryClick === 'function') onQueryClick(null);
+        }}
+      >
         {filteredChatHistory.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-500 text-sm">
             No chat history yet. Start a conversation below.
@@ -104,16 +117,17 @@ export default function ChatSection({
                 {/* Query Bubble */}
                 <button
                   className={`bg-blue-600 text-white px-2 py-3 rounded-lg max-w-[75%] shadow-md transition-all cursor-pointer focus:outline-none ${
-                    selectedQueryId === chat.id
+                    localSelectedId === chat.id
                       ? "ring-2 ring-cyan-400 ring-offset-transparent"
                       : "hover:bg-blue-700"
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();
+                    setLocalSelectedId(chat.id);
                     handleQueryClick(chat);
                   }}
                 >
-                  <p className="leading-relaxed text-left">{chat.query}</p>
+                  <p className="leading-relaxed text-left whitespace-pre-wrap break-words max-w-full">{chat.query}</p>
                 </button>
               </div>
 
@@ -121,7 +135,7 @@ export default function ChatSection({
               {chat.response ? (
                 <div className="flex flex-col items-start">
                   <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">
-                    <p className="leading-relaxed">{chat.response}</p>
+                    <p className="leading-relaxed whitespace-pre-wrap break-words max-w-full">{chat.response}</p>
                   </div>
                 </div>
               ) : (
