@@ -62,41 +62,56 @@ export default function ChatListItem({
         {new Date(chat.createdAt).toLocaleString()}
       </p>
 
-      {/* Three dots button */}
-      {hovered && !isRenaming && (
-        <button
-          className="absolute right-3 top-3 text-gray-300 hover:text-white"
+      {/* Right click/tap area for menu (larger hit area). Clicking here opens the menu. */}
+      {!isRenaming && (
+        <div
+          className="absolute right-2 top-0 bottom-0 flex items-start justify-center w-12"
           onClick={(e) => {
+            // prevent opening the chat
             e.stopPropagation();
             setMenuOpen((prev) => !prev);
           }}
+          role="button"
+          aria-label="Open chat actions"
         >
-          ⋮
-        </button>
+          {/* show three dots when hovered over item or when menu is open */}
+          {(hovered || menuOpen) && (
+            <div className="text-gray-300 hover:text-white select-none mt-5">⋮</div>
+          )}
+        </div>
       )}
 
       {/* Dropdown menu */}
       {menuOpen && !isRenaming && (
         <div
-          className="absolute right-3 top-8 bg-[#0f1720] border border-cyan-700 rounded shadow-lg z-50 w-32"
+          className="absolute right-14 top-10 bg-gradient-to-br from-[#071017] to-[#0f1720] border border-white/10 rounded-md shadow-2xl z-50 w-40 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <p
-            className="px-3 py-2 text-sm hover:bg-white/10 cursor-pointer"
-            onClick={() => {
-              setIsRenaming(true);
-              setMenuOpen(false);
-            }}
-          >
-            Rename
-          </p>
+          <div className="px-3 py-2 flex items-center">
+            <button
+              className="w-full text-left px-3 py-2 rounded-md text-sm text-white hover:bg-white/6 transition  flex items-center justify-between"
+              onClick={() => {
+                setIsRenaming(true);
+                setMenuOpen(false);
+              }}
+            >
+              {/* Rename Icon */}
+              <p>Rename</p>
+              <img src="/rename.svg" alt="Rename" className="block w-4 h-4" />
+            </button>
+          </div>
 
-          <p
-            className="px-3 py-2 text-sm hover:bg-white/10 cursor-pointer text-red-400"
-            onClick={() => onDelete(chat._id)}
-          >
-            Delete
-          </p>
+          <div className="border-t border-white/5 px-3 py-2">
+            <button
+              className="w-full text-left px-3 py-2 rounded-md text-sm text-red-400 hover:bg-red-600/10 transition flex items-center justify-between"
+             onClick={() => onDelete(chat._id)}
+              >
+              {/* Delete Text and Icon */}
+                <p>Delete</p>
+              <img src="/delete.svg" alt="Delete" className="block w-4  h-4" />
+              </button>
+            </div>
+
         </div>
       )}
     </div>

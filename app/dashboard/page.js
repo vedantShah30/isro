@@ -143,7 +143,7 @@ export default function Dashboard() {
 
             <Link
               href="/image"
-              className="px-6 py-3 bg-[#00A6FB] text-black font-bold rounded-lg shadow hover:bg-[#0095e0] transition"
+              className="px-6 py-3 bg-[#00A6FB] text-white/90 font-semibold rounded-lg shadow hover:bg-[#0095e0] transition"
             >
               + New Chat
             </Link>

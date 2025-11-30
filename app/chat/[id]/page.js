@@ -31,7 +31,7 @@ export default function ChatDetailPage() {
   const [imageUrl, setImageUrl] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Captioning");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isChatListOpen, setIsChatListOpen] = useState(false);
   const [activeChat, setActiveChat] = useState(null);

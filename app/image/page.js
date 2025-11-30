@@ -1,16 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import Link from 'next/link';
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { motion, AnimatePresence } from "framer-motion";
-import Loader from "../components/Loader"; // Assuming Loader is a component you have
+import { useEffect, useState } from "react";
+import Loader from "../components/Loader";
 import Scene3D from "../components/Scene3D";
 
 export default function ImagePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  // If the user is not authenticated, alert and redirect to landing
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      alert("Not Authenticated");
+      router.push("/");
+    }
+  }, [status, router]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -142,9 +150,14 @@ export default function ImagePage() {
       {/* Show loader during upload or analysis */}
       {(isUploading || isAnalyzing) && <Loader />}
 
+      {/* Header area inside flow — home/logo button aligned to the right of the upload area */}
+      {/* Placed before the upload wrapper so it flows naturally with the content */}
+
       {/* Main Content */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-12">
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 ">
+        
         <Scene3D />
+        
         {/* Upload Area */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -152,6 +165,19 @@ export default function ImagePage() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="w-full max-w-4xl"
         >
+          {/* top row: allows placing the logo to the right without absolute positioning */}
+          <div className="w-full flex items-center justify-end mb-4 pointer-events-auto">
+            <Link href="/dashboard">
+              <span
+                aria-label="Go to dashboard"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/6 hover:bg-white/10 border border-white/50 flex items-center justify-center text-white backdrop-blur-sm shadow transition p-0.5"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10.5z" />
+          </svg>
+              </span>
+            </Link>
+          </div>
           <AnimatePresence mode="wait">
             {!imagePreview ? (
               <motion.div
