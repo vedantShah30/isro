@@ -462,10 +462,59 @@ export default function ChatDetailPage() {
     }
   };
 
-  const handleSelectRoutine = (selectedPrompts, routine) => {
+  const handleSelectRoutine = async (selectedPrompts, routine) => {
     console.log("Routine selected:", routine);
     console.log("Selected prompts:", selectedPrompts);
-    // You can implement logic here to auto-fill or run the prompts
+    if (!imageUrl) {
+      setToastMessage("Please ensure an image is loaded");
+      setToastType("error");
+      setShowToast(true);
+      return;
+    }
+    if (!selectedPrompts || selectedPrompts.length === 0) {
+      setToastMessage("No prompts selected");
+      setToastType("error");
+      setShowToast(true);
+      return;
+    }
+    const sortedPrompts = [...selectedPrompts].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    setIsAnalyzing(true);
+    setToastMessage(`Running routine "${routine.title}" with ${sortedPrompts.length} prompts...`);
+    setToastType("success");
+    setShowToast(true);
+    for (let i = 0; i < sortedPrompts.length; i++) {
+      const prompt = sortedPrompts[i];
+      const category = prompt.type.charAt(0).toUpperCase() + prompt.type.slice(1); // Capitalize first letter
+      
+      try {
+        // Use the existing sendMessage logic but wait for each to complete
+        await sendMessage(prompt.prompt, category);
+        
+        // Add a small delay between prompts to avoid overwhelming the API
+        if (i < sortedPrompts.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } catch (error) {
+        console.error(`Error executing prompt ${i + 1}:`, error);
+        // Continue with next prompt even if one fails
+      }
+    }
+    setIsAnalyzing(false);
+  setToastMessage(`Routine "${routine.title}" completed!`);
+  setToastType("success");
+  setShowToast(true);
+  try {
+    await fetch("/api/routines/update-usage", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ routineId: routine._id }),
+    });
+  } catch (err) {
+    console.error("Failed to update routine usage:", err);
+  }
+
   };
 
   const handleSaveRoutineClick = () => {
