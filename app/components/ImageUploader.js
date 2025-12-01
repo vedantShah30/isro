@@ -22,16 +22,15 @@ import ImageCropperModal from "./ImageCropperModal";
     return vertices.filter(v => v && typeof v === 'object' && typeof v.x === 'number' && typeof v.y === 'number');
   };
 
-export default function ImageUploader({ onImageSelect, externalImage,showChangeImageButton=true ,coordinates =[],setBoundingBox=true}) {
+export default function ImageUploader({ onImageSelect, externalImage,showChangeImageButton=true ,coordinates =[],setBoundingBox=true,chatId}) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-
   const [showModal, setShowModal] = useState(false);
   const [showCropperModal, setShowCropperModal] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState(null);
-
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [cropUploading, setCropUploading] = useState(false); // NEW
 
   const fileInputRef = useRef(null);
@@ -41,6 +40,15 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       setPreview(externalImage);
     }
   }, [externalImage]);
+  useEffect(() => {
+    if (preview) {
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.src = preview;
+    }
+  }, [preview]);
 
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
@@ -51,7 +59,6 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       method: "POST",
       body: formData,
     });
-
     const data = await res.json();
     setUploading(false);
 
@@ -92,21 +99,19 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
   };
 
   const handleCropComplete = async (croppedImage) => {
-    setCropUploading(true);
+  if (!chatId) {
+    console.error("chatId is required for cropping");
+    return; // Prevent further execution if chatId is missing
+  }
 
-    const blob = await fetch(croppedImage).then((res) => res.blob());
-    const croppedFile = new File(
-      [blob],
-      selectedImage?.name || "cropped-image.jpg",
-      { type: blob.type }
-    );
-
-    const formData = new FormData();
-    formData.append("file", croppedFile);
-
+  setCropUploading(true);
+  try {
     const res = await fetch("/api/upload", {
       method: "POST",
-      body: formData,
+      body: JSON.stringify({ croppedUrl: croppedImage, chatId }), 
+      headers: {
+        "Content-Type": "application/json", 
+      },
     });
 
     const data = await res.json();
@@ -116,28 +121,17 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       console.error("Cloudinary upload failed:", data.error);
       return;
     }
-    console.log("Cropped image uploaded to: ", data.url);
 
-    // update preview
-    //setPreview(croppedImage);
-
-    // notify parent - change this to see the preview of the image
-    //onImageSelect?.(croppedFile, data.url);
+    console.log("Cropped image uploaded to Cloudinary, URL: ", data.url);
     setShowCropperModal(false);
     setTempImageForCrop(null);
-  };
-  
-  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+    onImageSelect?.(croppedImage, data.url); 
 
-  useEffect(() => {
-    if (preview) {
-      const img = new Image();
-      img.onload = () => {
-        setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-      img.src = preview;
-    }
-  }, [preview]);
+  } catch (err) {
+    console.error("Error uploading cropped image:", err);
+    setCropUploading(false);
+  }
+};
 
   const renderBoundingBoxes = () => {
     if (!coordinates || coordinates.length === 0 || !preview) return null;
@@ -226,7 +220,7 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
                 <img
                   src={preview}
                   alt="Preview"
-                  className=" object-contain cursor-pointer"
+                  className="w-full h-full object-cover cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowModal(true);

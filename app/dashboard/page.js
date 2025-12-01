@@ -167,10 +167,7 @@ export default function Dashboard() {
           >
             <p className="text-sm text-[#98C1D9]">Images Analyzed</p>
             <p className="text-3xl font-bold text-[#FFFFFF]">
-              {chats.reduce(
-                (acc, chat) => acc + (chat.responses?.length || 0),
-                0
-              )}
+              {chats.length}
             </p>
           </motion.div>
         </div>

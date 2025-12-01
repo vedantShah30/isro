@@ -56,6 +56,10 @@ const ChatSchema = new mongoose.Schema(
       type: String,
       required: true, // Satellite image URL for this chat session
     },
+    croppedUrl: {
+      type: String,
+      default:null,
+    },
     routine: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Routine',
