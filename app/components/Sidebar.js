@@ -59,7 +59,7 @@ export default function Sidebar({
             viewBox="0 0 24 24"
             fill="none"
             stroke="white"
-            strokeWidth="2"
+            strokeWidth="1"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
@@ -73,6 +73,16 @@ export default function Sidebar({
           onClick={() => onOpenRoutines?.()}
           className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
           title="View Routines"
+        >
+          <img
+          src='/routine.png'
+          className="w-8 h-8"
+          />
+        </button>
+        <button
+          onClick={() => window.location.href = '/image'}
+          className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+          title="Go to Image Page"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -88,6 +98,7 @@ export default function Sidebar({
               stroke-linecap="round"
             />
           </svg>
+          
         </button>
       </div>
 
