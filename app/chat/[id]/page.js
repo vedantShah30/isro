@@ -243,6 +243,7 @@ export default function ChatDetailPage() {
         );
         return;
       }
+      
 
       const responsesArray = data.chat.responses;
       const savedResponse = responsesArray[responsesArray.length - 1].response;
