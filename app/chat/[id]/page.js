@@ -226,6 +226,7 @@ export default function ChatDetailPage() {
           },
         }),
       });
+      setSelectedCategory("");
 
       const data = await res.json();
 
