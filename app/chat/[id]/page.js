@@ -493,7 +493,8 @@ export default function ChatDetailPage() {
           <div className="w-[800px] flex items-center justify-center">
             <UploadCard
               onImageSelect={handleImageSelect}
-              imagePreview={imageUrl}
+              imagePreview={chat?.croppedUrl || imageUrl}
+              originalImageUrl={imageUrl}
               showChangeImageButton={false}
               coordinates={coordinates}
               setBoundingBox={Boolean(
@@ -501,6 +502,7 @@ export default function ChatDetailPage() {
                   coordinates.length > 0 &&
                   selectedCategory === "Grounding"
               )}
+              onCropComplete={fetchChatData}
             />
           </div>
 

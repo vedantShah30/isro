@@ -1,11 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import ImageUploader from "./ImageUploader";
-import { useState } from "react";
 import { usePathname } from "next/navigation";
+import ImageUploader from "./ImageUploader";
 
-export default function UploadCard({ onImageSelect, imagePreview,showChangeImageButton,coordinates =[],setBoundingBox}) {
+export default function UploadCard({ onImageSelect, imagePreview,showChangeImageButton,coordinates =[],setBoundingBox, onCropComplete, originalImageUrl}) {
   const pathname = usePathname();
   const isChatDetailPage = /^\/chat\/[^/]+$/.test(pathname);
   return (
@@ -24,6 +23,8 @@ export default function UploadCard({ onImageSelect, imagePreview,showChangeImage
               showChangeImageButton = {showChangeImageButton}
               coordinates = {coordinates}
               setBoundingBox={setBoundingBox}
+              onCropComplete={onCropComplete}
+              originalImageUrl={originalImageUrl}
             />
           </div>
         </div>

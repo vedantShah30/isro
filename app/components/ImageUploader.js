@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import ImageCropperModal from "./ImageCropperModal";
   const getVerticesFromBox = (box) => {
     // Handle both array format and object format with C0, C1, C2, C3
@@ -22,16 +22,15 @@ import ImageCropperModal from "./ImageCropperModal";
     return vertices.filter(v => v && typeof v === 'object' && typeof v.x === 'number' && typeof v.y === 'number');
   };
 
-export default function ImageUploader({ onImageSelect, externalImage,showChangeImageButton=true ,coordinates =[],setBoundingBox=true}) {
+export default function ImageUploader({ onImageSelect, externalImage,showChangeImageButton=true ,coordinates =[],setBoundingBox=true, onCropComplete, originalImageUrl}) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-
   const [showModal, setShowModal] = useState(false);
   const [showCropperModal, setShowCropperModal] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState(null);
-
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [cropUploading, setCropUploading] = useState(false); // NEW
 
   const fileInputRef = useRef(null);
@@ -41,6 +40,15 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       setPreview(externalImage);
     }
   }, [externalImage]);
+  useEffect(() => {
+    if (preview) {
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.src = preview;
+    }
+  }, [preview]);
 
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
@@ -51,7 +59,6 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       method: "POST",
       body: formData,
     });
-
     const data = await res.json();
     setUploading(false);
 
@@ -87,7 +94,9 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
   };
 
   const handleCropClick = () => {
-    setTempImageForCrop(preview);
+    // Always use the original imageUrl for cropping, not the cropped preview
+    const imageToCrop = originalImageUrl || externalImage || preview;
+    setTempImageForCrop(imageToCrop);
     setShowCropperModal(true);
   };
 
@@ -116,7 +125,42 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       console.error("Cloudinary upload failed:", data.error);
       return;
     }
-    console.log("Cropped image uploaded to: ", data.url);
+    // console.log("Cropped image uploaded to: ", data.url);
+  
+    // Save cropped URL to chat that has the same imageUrl
+    // Use originalImageUrl prop or externalImage (original Cloudinary URL) to find the matching chat
+    // Only use if it's a valid URL (not a data URL)
+    const isDataUrl = (url) => url && url.startsWith('data:');
+    const imageUrlForUpdate = originalImageUrl || (externalImage && !isDataUrl(externalImage) ? externalImage : null);
+    
+    if (imageUrlForUpdate && data.url) {
+      try {
+        const updateRes = await fetch("/api/chats/update-cropped-url", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageUrl: imageUrlForUpdate,
+            croppedUrl: data.url,
+          }),
+        });
+
+        const updateData = await updateRes.json();
+        if (!updateRes.ok || !updateData.success) {
+          console.error("Failed to update cropped URL:", updateData.error);
+        } else {
+          // console.log("Cropped URL saved to chat with imageUrl:", originalImageUrl);
+          // Notify parent that crop is complete so it can refresh chat data
+          if (onCropComplete) {
+            onCropComplete();
+          }
+        }
+      } catch (err) {
+        console.error("Error updating cropped URL:", err);
+      }
+    } else if (!originalImageUrl) {
+      console.warn("Cannot save cropped URL: No valid imageUrl found. Make sure you're cropping an image from an existing chat.");
+    }
 
     // update preview
     //setPreview(croppedImage);
@@ -126,19 +170,6 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
     setShowCropperModal(false);
     setTempImageForCrop(null);
   };
-  
-  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    if (preview) {
-      const img = new Image();
-      img.onload = () => {
-        setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-      img.src = preview;
-    }
-  }, [preview]);
-
   const renderBoundingBoxes = () => {
     if (!coordinates || coordinates.length === 0 || !preview) return null;
     
@@ -226,7 +257,7 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
                 <img
                   src={preview}
                   alt="Preview"
-                  className=" object-contain cursor-pointer"
+                  className="w-full h-full object-cover cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowModal(true);
