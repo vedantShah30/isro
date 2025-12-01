@@ -3,16 +3,21 @@
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { motion, px } from 'framer-motion';
+import { useState } from 'react';
+import { Scan, MessageSquare, Box, Globe, ChevronRight, Activity } from 'lucide-react';
 
+// Load your Scene3D as before
 const Scene3D = dynamic(() => import('./components/Scene3D'), {
   ssr: false,
-  loading: () => <div className="fixed inset-0 -z-10 bg-black" />
-});
+  loading: () => <div className="fixed inset-0 -z-10 bg-[#050510]" />
+}); 
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [activeFeature, setActiveFeature] = useState(0);
 
   const handleGetStarted = () => {
     if (session) {
@@ -22,15 +27,55 @@ export default function LandingPage() {
     }
   };
 
+  const features = [
+    {
+      title: "AI Captioning",
+      desc: "Generate comprehensive descriptions of satellite imagery",
+      icon: <MessageSquare className="w-6 h-6" />,
+      color: "from-cyan-400 to-blue-500"
+    },
+    {
+      title: "Object Grounding",
+      desc: "Localize and identify objects with precise oriented bounding boxes.",
+      icon: <Scan className="w-6 h-6" />,
+      color: "from-emerald-400 to-teal-500"
+    },
+    {
+      title: "Visual Q&A",
+      desc: "Answer complex questions about geometric and semantic attributes.",
+      icon: <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>,
+      color: "from-violet-400 to-purple-500"
+    }
+  ];
+
   return (
-    <div className="min-h-screen text-white overflow-x-hidden">
+    <div className="min-h-screen text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
+      {/* Background Elements */}
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-black/20 to-black z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-0 pointer-events-none brightness-100 contrast-150" />
+      
       <Scene3D />
+
+      {/* Grid Overlay for "Tech" feel */}
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)] z-0 pointer-events-none" />
 
       {/* Navigation */}
       <motion.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 border-b border-cyan-500/20 backdrop-blur-xl bg-black/30"
+        className="relative z-10  backdrop-blur-xl"
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -70,125 +115,144 @@ export default function LandingPage() {
         </div>
       </motion.nav>
 
-      {/* Hero Section */}
-      <main className="relative z-10 container mx-auto px-4">
-        <div className="min-h-[80vh] flex flex-col items-center justify-center text-center space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+      {/* Main Content */}
+      <main className="relative z-10 container mx-auto px-6 pt-12 md:pt-12">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
+          
+          {/* LEFT: Typography & Features */}
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-6"
+            className="flex-1 space-y-10"
           >
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent mb-2">
-              Satellite Imagery Analysis
-            </h1>
-            <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
-              Powered by Advanced AI Models for Image Captioning, Object
-              Grounding, and Visual Q&A
-            </p>
-          </motion.div>
-
-          {/* Features Grid with Image Preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="flex flex-col md:flex-row items-start md:items-stretch gap-24 mt-10"
-          >
-            {/* Left side – Features List */}
-            <div className="flex flex-col flex-1">
-              {/* Image Captioning */}
-              <div className="backdrop-blur-xl bg-gradient-to-br from-slate-900/60 to-slate-800/40 rounded-xl mb-4 p-6 hover:scale-105 transition-all">
-                <div className="flex items-center justify-center gap-4 mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white">
-                    Captioning
-                  </h3>
-                </div>
-                <p className="text-slate-400 text-sm">
-                  Generate comprehensive descriptions of satellite imagery
-                </p>
-              </div>
-
-              {/* Object Grounding */}
-              <div className="backdrop-blur-xl bg-gradient-to-br from-slate-900/60 to-slate-800/40 rounded-xl mb-4 p-6 hover:scale-105 transition-all">
-                <div className="flex items-center justify-center gap-4 mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white">
-                    Grounding
-                  </h3>
-                </div>
-                <p className="text-slate-400 text-sm">
-                  Localize and identify objects with precise oriented bounding
-                  boxes
-                </p>
-              </div>
-
-              {/* Visual Q&A */}
-              <div className="backdrop-blur-xl bg-gradient-to-br from-slate-900/60 to-slate-800/40 rounded-xl p-6 hover:scale-105 transition-all">
-                <div className="flex items-center justify-center gap-4 mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white">
-                    Visual Q&A
-                  </h3>
-                </div>
-                <p className="text-slate-400 text-sm">
-                  Answer complex questions about geometric and semantic
-                  attributes
-                </p>
-              </div>
+            <div className="space-y-4">
+              
+              
+              <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
+                Deciphering <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600  mb-2">
+                  Earth From Above
+                </span>
+              </h1>
+              
+              <p className="text-lg text-slate-400 max-w-lg leading-relaxed  border-cyan-500/30 pl-1">
+                Transforming High-Resolution Satellite Images into Actionable Insights 
+              </p>
             </div>
 
-            {/* Right side – Image Box */}
-            <div className="flex h-96">
-              <div className="rounded-xl overflow-hidden bg-slate-900/60 backdrop-blur-xl shadow-xl">
-                <img
-                  src="/runway.jpg"
-                  alt="Preview"
-                  className="w-full h-full object-cover opacity-80"
+            {/* Interactive Feature List */}
+            <div className="space-y-4">
+              {features.map((feature, idx) => (
+                <div 
+                  key={idx}
+                  onMouseEnter={() => setActiveFeature(idx)}
+                  className={`group relative p-4 rounded-xl border transition-all duration-300 cursor-default ${
+                    activeFeature === idx 
+                      ? "bg-white/5 border-cyan-500/50 " 
+                      : "bg-transparent border-transparent hover:bg-white/5"
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-lg bg-gradient-to-br ${feature.color} bg-opacity-10`}>
+                      {feature.icon}
+                    </div>
+                    <div>
+                      <h3 className={`text-lg font-semibold transition-colors ${activeFeature === idx ? "text-white" : "text-slate-400"}`}>
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-slate-500 group-hover:text-slate-400 transition-colors">
+                        {feature.desc}
+                      </p>
+                    </div>
+                  </div>
+                  
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* RIGHT: The Holographic Scanner */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="flex-1 w-full max-w-xl"
+          >
+            <div className="relative group">
+              {/* Glowing backdrops */}
+              {/* <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000" /> */}
+              
+              {/* Main Image Container */}
+              <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+                
+                {/* Header of the Scanner UI */}
+                <div className="absolute top-0 left-0 right-0 h-10 bg-black/60 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-4 z-20">
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                  </div>
+                  <div className="text-[10px] font-mono text-cyan-400/70">IMG_SAT_V8.22 // LAT: 23.0225° N</div>
+                </div>
+
+                
+                <img 
+                  src="/runway.jpg" 
+                  alt="Satellite Analysis" 
+                  className=" w-full h-[500px] object-cover opacity-80"
                 />
+                
+                {/* Scanning Animation */}
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/20 to-transparent z-10 pointer-events-none"
+                  initial={{ top: "-100%" }}
+                  animate={{ top: "200%" }}
+                  transition={{ 
+                    duration: 3, 
+                    repeat: Infinity, 
+                    ease: "linear" 
+                  }}
+                  style={{ height: '50%' }}
+                >
+                  <div className="absolute bottom-0 w-full h-[2px] bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,1)]" />
+                </motion.div>
+
+                {/* Targeting HUD Elements */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-white/20 rounded-lg z-10">
+                   <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-cyan-500" />
+                   <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-cyan-500" />
+                   <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-cyan-500" />
+                   <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-cyan-500" />
+                   
+                   {/* Data Tag Floating near Object */}
+                   <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
+                    className="absolute -right-24 top-0 bg-black/80 backdrop-blur border border-cyan-500/30 p-2 rounded text-xs font-mono text-cyan-300"
+                   >
+                     TYPE: RUNWAY<br/>
+                     CONF: 0.9
+                   </motion.div>
+                </div>
+
+                {/* Bottom Stats Grid */}
+                <div className="absolute bottom-0 inset-x-0 h-16 bg-black/80 backdrop-blur-md border-t border-white/10 grid grid-cols-3 divide-x divide-white/10 z-20">
+                  <div className="flex flex-col items-center justify-center p-2">
+                    <span className="text-[10px] text-slate-500 uppercase">Object Detected</span>
+                    <span className="text-sm font-mono text-white">Aeroplane</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center pt-1.5">
+                    <span className="text-[10px] text-slate-500 uppercase">Object Count</span>
+                    <span className="text-lg font-mono text-cyan-400">4</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2">
+                    <span className="text-[10px] text-slate-500 uppercase">Status</span>
+                    <span className="text-sm font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded">LIVE</span>
+                  </div>
+                </div>
+
               </div>
             </div>
           </motion.div>
