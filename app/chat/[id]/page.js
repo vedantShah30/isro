@@ -75,7 +75,7 @@ export default function ChatDetailPage() {
       setChat(chatData);
       setActiveChat(chatData);
       setImageUrl(chatData.imageUrl);
-      
+
       // Extract coordinates from grounding responses
       const coordinatesData = [];
       if (chatData.responses && Array.isArray(chatData.responses)) {
@@ -140,35 +140,69 @@ export default function ChatDetailPage() {
 
     const msg = message.trim();
     const tempId = Date.now();
+    let finalCategory = category;
 
-    // Temporary UI message
     const tempChat = {
       id: tempId,
       query: msg,
       response: "Processing...",
       timestamp: new Date(),
-      category,
+      category: finalCategory || "Captioning",
       error: false,
-      coordinates: [], // Initialize with empty coordinates
+      coordinates: [],
     };
-
     setChatHistory((prev) => [...prev, tempChat]);
     setInputMessage("");
 
     try {
       setIsAnalyzing(true);
-      //Update the coordinates which you get from GROUNDING Model 
-      let GroundingCoordinates = [];
 
-    if (category.toLowerCase() === "grounding") {
-      // Add coordinates only for "grounding" responses
-      GroundingCoordinates = [
-        { C0: { x: 100, y: 200 }, C1: { x: 200, y: 200 }, C2: { x: 200, y: 100 }, C3: { x: Math.floor(Math.random()*100+1), y: Math.floor(Math.random()*100+1) } },
-        { C0: { x: 500, y: 700 }, C1: { x: 700, y: 700 }, C2: { x: 700, y: 500 }, C3: { x: 500, y: 500 } },
-      ];
-    }
+      if (!finalCategory || finalCategory === "") {
+        const classifyRes = await fetch("/api/models/classify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: msg }),
+        });
 
-      // Update chat with new response
+        const classifyData = await classifyRes.json();
+        finalCategory = classifyData.type || "Captioning";
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.id === tempId ? { ...c, category: finalCategory } : c
+          )
+        );
+      }
+
+      let aiResponse = "";
+      let responseCoordinates = [];
+      const categoryLower = finalCategory.toLowerCase();
+      if (categoryLower === "captioning") {
+        const captionRes = await fetch("/api/models/caption", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl, prompt: msg }),
+        });
+        const captionData = await captionRes.json();
+        aiResponse = captionData.caption || "No response from caption model";
+      } else if (categoryLower === "grounding") {
+        const groundingRes = await fetch("/api/models/ground", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl, prompt: msg }),
+        });
+        const groundingData = await groundingRes.json();
+        aiResponse = groundingData.description || JSON.stringify(groundingData);
+        responseCoordinates = groundingData.coordinates || [];
+      } else if (categoryLower === "vqa") {
+        const vqaRes = await fetch("/api/models/vqa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl, prompt: msg }),
+        });
+        const vqaData = await vqaRes.json();
+        aiResponse = vqaData.answer || "No response from VQA model";
+      }
+
       const res = await fetch("/api/chats/update", {
         method: "POST",
         credentials: "include",
@@ -178,10 +212,11 @@ export default function ChatDetailPage() {
           routineId: null,
           responses: [
             {
-              type: category.toLowerCase(),
+              type: categoryLower,
               prompt: msg,
-              response: `This is placeholder response for ${msg} this will be replaced soon`,
-              coordinates:GroundingCoordinates
+              response: aiResponse,
+              coordinates:
+                categoryLower === "grounding" ? responseCoordinates : [],
             },
           ],
           metadata: {
@@ -211,29 +246,32 @@ export default function ChatDetailPage() {
 
       const responsesArray = data.chat.responses;
       const savedResponse = responsesArray[responsesArray.length - 1].response;
-      const savedCoordinates = responsesArray[responsesArray.length - 1].coordinates || [];
+      const savedCoordinates =
+        responsesArray[responsesArray.length - 1].coordinates || [];
 
-      // Update chat history with response and coordinates
       setChatHistory((prev) =>
         prev.map((c) =>
           c.id === tempId
-            ? { 
-                ...c, 
+            ? {
+                ...c,
                 response: JSON.stringify(savedResponse, null, 2),
-                coordinates: category.toLowerCase() === "grounding" ? (savedCoordinates || []) : []
+                coordinates:
+                  categoryLower === "grounding" ? savedCoordinates || [] : [],
               }
             : c
         )
       );
 
-      // If this is a grounding response with coordinates, automatically select it
-      if (category.toLowerCase() === "grounding" && savedCoordinates && savedCoordinates.length > 0) {
+      if (
+        categoryLower === "grounding" &&
+        savedCoordinates &&
+        savedCoordinates.length > 0
+      ) {
         setSelectedQueryId(tempId);
         setCoordinates(savedCoordinates);
         setSelectedCategory("Grounding");
       }
 
-      // Update chat state without refetching
       setChat(data.chat);
       setActiveChat(data.chat);
       setReloadChats((prev) => !prev);
@@ -340,7 +378,11 @@ export default function ChatDetailPage() {
     setSelectedQueryId(chatItem.id);
 
     // If it's a grounding query, show its coordinates
-    if (chatItem.category === "Grounding" && chatItem.coordinates && chatItem.coordinates.length > 0) {
+    if (
+      chatItem.category === "Grounding" &&
+      chatItem.coordinates &&
+      chatItem.coordinates.length > 0
+    ) {
       setCoordinates(chatItem.coordinates);
       console.log(chatItem.coordinates);
       setSelectedCategory("Grounding");

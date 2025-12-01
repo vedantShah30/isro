@@ -80,9 +80,6 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-
-
-              
               <svg
                 className="w-10 h-10 text-cyan-400"
                 viewBox="0 0 24 24"
