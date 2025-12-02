@@ -155,9 +155,8 @@ export default function ImagePage() {
 
       {/* Main Content */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 ">
-        
         <Scene3D />
-        
+
         {/* Upload Area */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -172,9 +171,20 @@ export default function ImagePage() {
                 aria-label="Go to dashboard"
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/6 hover:bg-white/10 border border-white/50 flex items-center justify-center text-white backdrop-blur-sm shadow transition p-0.5"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10.5z" />
-          </svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1"
+                    d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10.5z"
+                  />
+                </svg>
               </span>
             </Link>
           </div>
@@ -246,7 +256,8 @@ export default function ImagePage() {
                       Upload Satellite Imagery
                     </h3>
                     <p className="text-lg text-gray-400 mb-6">
-                      Drag and drop your satellite image here, or click to browse
+                      Drag and drop your satellite image here, or click to
+                      browse
                     </p>
 
                     <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
