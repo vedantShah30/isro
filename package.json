@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev\" \"nodemon server/wsServer.js\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -14,20 +14,24 @@
     "@react-three/fiber": "^9.4.0",
     "axios": "^1.13.2",
     "cloudinary": "^2.8.0",
+    "dotenv": "^17.2.3",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.555.0",
     "mongoose": "^9.0.0",
     "next": "16.0.3",
     "next-auth": "^4.24.13",
+    "nodemon": "^3.1.11",
     "react": "19.2.0",
     "react-cropper": "^2.3.3",
     "react-dom": "19.2.0",
     "react-image-crop": "^11.0.10",
-    "three": "^0.181.2"
+    "three": "^0.181.2",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "autoprefixer": "^10.4.22",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "postcss": "^8.5.6",

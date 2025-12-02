@@ -175,7 +175,7 @@ export default function LandingPage() {
                     IMG_SAT_V8.22 // LAT: 23.0225° N
                   </div>
                 </div>
-
+ 
                 <img
                   src="/runway.jpg"
                   alt="Satellite Analysis"
