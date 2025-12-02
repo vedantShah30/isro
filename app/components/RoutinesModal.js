@@ -60,7 +60,6 @@ export default function RoutinesModal({
       ...selectedRoutine.prompts[i],
       prompt: editedPrompts[i] || selectedRoutine.prompts[i].prompt,
     }));
-    console.log("Running selected prompts:", selectedData);
     onSelectRoutine?.(selectedData, selectedRoutine);
     onClose?.();
   };

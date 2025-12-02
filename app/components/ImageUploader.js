@@ -129,8 +129,6 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       console.error("Cloudinary upload failed:", data.error);
       return;
     }
-    // console.log("Cropped image uploaded to: ", data.url);
-  
     // Save cropped URL to chat that has the same imageUrl
     // Use originalImageUrl prop or externalImage (original Cloudinary URL) to find the matching chat
     // Only use if it's a valid URL (not a data URL)
@@ -153,7 +151,6 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
         if (!updateRes.ok || !updateData.success) {
           console.error("Failed to update cropped URL:", updateData.error);
         } else {
-          // console.log("Cropped URL saved to chat with imageUrl:", originalImageUrl);
           // Notify parent that crop is complete so it can refresh chat data
           if (onCropComplete) {
             onCropComplete();

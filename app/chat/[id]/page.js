@@ -52,8 +52,9 @@ export default function ChatDetailPage() {
   
   // WebSocket and streaming metadata
   const wsRef = useRef(null);
-  const streamMetaRef = useRef({}); // streamId -> { prompt, categoryLower }
-
+  const streamMetaRef = useRef({}); // streamId -> { prompt, categoryLower,imageUrl }
+  const pendingStreamsRef = useRef({}); // streamId -> { resolve, reject }
+  const typingWaitersRef = useRef({}); // messageId -> resolve() 
   const fetchChatData = useCallback(async () => {
     if (!chatId) return;
 
@@ -140,8 +141,14 @@ export default function ChatDetailPage() {
       setError("Failed to load chat");
     } finally {
       setLoading(false);
-    }
+    } 
   }, [chatId]);
+  const waitForTyping = useCallback((messageId) => {
+  return new Promise((resolve) => {
+    typingWaitersRef.current[messageId] = resolve;
+  });
+}, []);
+
 
   const sendMessage = async (message, category) => {
     if (!message.trim() || !imageUrl) return;
@@ -194,8 +201,11 @@ export default function ChatDetailPage() {
         streamMetaRef.current[tempId] = {
           prompt: msg,
           categoryLower,
+          imageUrl
         };
-
+        const streamPromise = new Promise((resolve, reject) => {
+        pendingStreamsRef.current[tempId] = { resolve, reject };
+        });
         ws.send(
           JSON.stringify({
             type: "start",
@@ -208,7 +218,7 @@ export default function ChatDetailPage() {
 
         // In streaming mode, we don't immediately clear analyzing here;
         // it will be cleared when we receive "done" or "error" from WS.
-        return;
+        return  { messageId: tempId, streamPromise };
       }
 
       // Fallback: current HTTP-based flow (no streaming)
@@ -260,7 +270,7 @@ export default function ChatDetailPage() {
           metadata: {
             uploadedAt: chat?.metadata?.uploadedAt || new Date(),
             processingTime: 0,
-            imageSize: chat?.metadata?.imageSize || "1024x1024",
+            imageSize: chat?.metadata?.imageSize || "2000x2000",
           },
         }),
       });
@@ -280,7 +290,7 @@ export default function ChatDetailPage() {
               : c
           )
         );
-        return;
+        return { messageId: tempId, streamPromise: Promise.resolve() };
       }
 
       const responsesArray = data.chat.responses;
@@ -429,7 +439,7 @@ export default function ChatDetailPage() {
         } else if (type === "done") {
           const meta = streamMetaRef.current[streamId];
           if (!meta) return;
-          const { prompt, categoryLower } = meta;
+          const { prompt, categoryLower,imageUrl } = meta;
 
           // Update UI with final text and coordinates
           setChatHistory((prev) =>
@@ -471,19 +481,31 @@ export default function ChatDetailPage() {
               }),
             });
             
-
+            
             const data = await res.json();
             if (res.ok && data.success) {
               setChat(data.chat);
               setActiveChat(data.chat);
               setReloadChats((prev) => !prev);
+
+              const pending = pendingStreamsRef.current[streamId];
+              if (pending) {
+              pending.resolve();
+              delete pendingStreamsRef.current[streamId];
+              }
             } else {
               console.error("Failed to save streamed chat:", data.error);
             }
+            
           } catch (err) {
             console.error("Error saving streamed chat:", err);
           } finally {
             setIsAnalyzing(false);
+          }
+           const pending = pendingStreamsRef.current[streamId];
+          if (pending) {
+          pending.resolve(full); // you can pass full or any data you like
+          delete pendingStreamsRef.current[streamId];
           }
 
           delete streamMetaRef.current[streamId];
@@ -500,6 +522,12 @@ export default function ChatDetailPage() {
             )
           );
           setIsAnalyzing(false);
+          const pending = pendingStreamsRef.current[streamId];
+          if (pending) {
+          pending.reject(new Error(error || "Streaming error"));
+          delete pendingStreamsRef.current[streamId];
+        }
+        
         }
       } catch (err) {
         console.error("WebSocket message parse error:", err);
@@ -558,7 +586,6 @@ export default function ChatDetailPage() {
       chatItem.coordinates.length > 0
     ) {
       setCoordinates(chatItem.coordinates);
-      console.log(chatItem.coordinates);
       setSelectedCategory("Grounding");
     } else {
       // Clear coordinates for non-grounding queries
@@ -637,8 +664,6 @@ export default function ChatDetailPage() {
   };
 
   const handleSelectRoutine = async (selectedPrompts, routine) => {
-    console.log("Routine selected:", routine);
-    console.log("Selected prompts:", selectedPrompts);
     if (!imageUrl) {
       setToastMessage("Please ensure an image is loaded");
       setToastType("error");
@@ -663,8 +688,13 @@ export default function ChatDetailPage() {
       
       try {
         // Use the existing sendMessage logic but wait for each to complete
-        await sendMessage(prompt.prompt, category);
-        
+         const { messageId, streamPromise } = await sendMessage(
+          prompt.prompt,
+          category
+         );
+        await streamPromise;
+        await waitForTyping(messageId);
+
         // Add a small delay between prompts to avoid overwhelming the API
         if (i < sortedPrompts.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -734,6 +764,13 @@ export default function ChatDetailPage() {
             chatHistory={chatHistory}
             onQueryClick={handleQueryClick}
             selectedQueryId={selectedQueryId}
+            onTypingComplete={(msgId) => {              
+            const resolver = typingWaitersRef.current[msgId];
+            if (resolver) {
+              resolver();                            
+              delete typingWaitersRef.current[msgId];
+              }
+            }}
           />
         </div>
         {isChatListOpen && (

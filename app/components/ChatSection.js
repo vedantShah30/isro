@@ -17,7 +17,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export default function ChatSection({ 
   chatHistory = [],
   onQueryClick = null,
-  selectedQueryId = null
+  selectedQueryId = null,
+  onTypingComplete = () => {},
 }) {
   const [activeTab, setActiveTab] = useState('All');
   const chatEndRef = useRef(null);
@@ -26,14 +27,17 @@ export default function ChatSection({
   // Typing effect state
   const [displayedTexts, setDisplayedTexts] = useState({}); // { messageId: displayedText }
   const [typingMessageId, setTypingMessageId] = useState(null); // Currently typing message ID
-  
+    
   const lastProcessedLengthRef = useRef({}); // { messageId: lastLength }
   const charQueueRef = useRef({}); // { messageId: [characters] }
   const typingIntervalRef = useRef(null);
   const isInitializedRef = useRef({}); // Track which messages are initialized
 
   const typingSpeed = 45; // 45ms per character
-
+   const chatHistoryRef = useRef(chatHistory);
+  useEffect(() => {
+    chatHistoryRef.current = chatHistory;
+  }, [chatHistory]);
   // Keep localSelectedId in sync with prop
   useEffect(() => {
     setLocalSelectedId(selectedQueryId);
@@ -96,16 +100,34 @@ export default function ChatSection({
         setTypingMessageId(null);
         return;
       }
+      const numericId = Number(messageIdToType);
+
+      const chats = chatHistoryRef.current || [];
+      const chatForMsg = chats.find((c) => c.id === numericId);
+      const fullResponse = (chatForMsg && chatForMsg.response) || '';
 
       // Type one character
       const charQueue = charQueueRef.current[messageIdToType];
       if (charQueue.length > 0) {
         const nextChar = charQueue.shift();
-        setTypingMessageId(Number(messageIdToType));
-        setDisplayedTexts(prev => ({
-          ...prev,
-          [messageIdToType]: (prev[messageIdToType] || '') + nextChar
-        }));
+        setTypingMessageId(numericId);
+        setDisplayedTexts((prev) => {
+          const prevText = prev[messageIdToType] || '';
+          const newText = prevText + nextChar;
+          if (
+            fullResponse &&
+            newText.length === fullResponse.length &&
+            (!charQueueRef.current[messageIdToType] ||
+              charQueueRef.current[messageIdToType].length === 0)
+          ) {
+            onTypingComplete(numericId);
+          }
+
+          return {
+            ...prev,
+            [messageIdToType]: newText,
+          };
+        });
       }
     }, typingSpeed);
   }, [typingSpeed]);
@@ -136,6 +158,7 @@ export default function ChatSection({
             // If it's an old/complete message, show it immediately
             if (isOldMessage) {
               lastProcessedLengthRef.current[messageId] = fullResponse.length;
+              onTypingComplete(messageId);
               return { ...prev, [messageId]: fullResponse };
             }
             // If it's a new message, start with empty string
@@ -169,7 +192,7 @@ export default function ChatSection({
         }
       }
     });
-  }, [chatHistory, startTyping]);
+  }, [chatHistory, startTyping,onTypingComplete]);
 
   // Handle "done" state - show full response immediately
   useEffect(() => {
@@ -204,6 +227,7 @@ export default function ChatSection({
           // Show full response immediately
           setDisplayedTexts(prev => {
             if (prev[messageId] !== fullResponse) {
+              onTypingComplete(messageId);
               return { ...prev, [messageId]: fullResponse };
             }
             return prev;
@@ -213,7 +237,7 @@ export default function ChatSection({
         }
       }
     });
-  }, [chatHistory, displayedTexts, typingMessageId]);
+  }, [chatHistory, displayedTexts, typingMessageId,onTypingComplete]);
 
   // Cleanup on unmount
   useEffect(() => {

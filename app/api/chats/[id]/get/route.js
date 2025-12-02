@@ -18,7 +18,6 @@ export async function GET(req,{params}) {
     }
     
    const {id} = await params;
-   console.log(id)
     if (!id) {
         return NextResponse.json(
             { success: false, error: "Chat ID is required" },

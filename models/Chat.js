@@ -90,7 +90,7 @@ ChatSchema.pre('save', async function (next) {
     }
     next();
   } catch (err) {
-    console.log(err)
+    console.error(err)
   }
 });
 

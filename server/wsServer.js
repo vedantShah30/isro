@@ -28,6 +28,7 @@ wss.on('connection', (ws) => {
               parts: [
                 { text: `${category} task: ${prompt}` },
                 // if you use image, attach it via inlineData here, or send imageUrl to your own backend
+                
               ],
             },
           ],
@@ -88,4 +89,4 @@ wss.on('connection', (ws) => {
   });
 });
 
-console.log('WebSocket server listening on ws://localhost:8080');
+console.log('WebSocket server listening on ws://localhost:8080'); 
