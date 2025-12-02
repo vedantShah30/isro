@@ -3,6 +3,7 @@
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { Oswald } from 'next/font/google';
 import Image from 'next/image';
 import { motion, px } from 'framer-motion';
 import { useState } from 'react';
@@ -13,6 +14,13 @@ const Scene3D = dynamic(() => import('./components/Scene3D'), {
   ssr: false,
   loading: () => <div className="fixed inset-0 -z-10 bg-[#050510]" />
 }); 
+
+// Load a Google font for headings (Oswald). Change to another Google font if you prefer.
+const oswald = Oswald({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  display: 'swap',
+});
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
@@ -129,7 +137,8 @@ export default function LandingPage() {
             <div className="space-y-4">
               
               
-              <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
+              <h1 className={`text-10xl md:text-9xl mt-8 font-bold text-white leading-tight ${oswald.className}`}>
+
                 Deciphering <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600  mb-2">
                   Earth From Above
@@ -142,34 +151,7 @@ export default function LandingPage() {
             </div>
 
             {/* Interactive Feature List */}
-            <div className="space-y-4">
-              {features.map((feature, idx) => (
-                <div 
-                  key={idx}
-                  onMouseEnter={() => setActiveFeature(idx)}
-                  className={`group relative p-4 rounded-xl border transition-all duration-300 cursor-default ${
-                    activeFeature === idx 
-                      ? "bg-white/5 border-cyan-500/50 " 
-                      : "bg-transparent border-transparent hover:bg-white/5"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg bg-gradient-to-br ${feature.color} bg-opacity-10`}>
-                      {feature.icon}
-                    </div>
-                    <div>
-                      <h3 className={`text-lg font-semibold transition-colors ${activeFeature === idx ? "text-white" : "text-slate-400"}`}>
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-slate-500 group-hover:text-slate-400 transition-colors">
-                        {feature.desc}
-                      </p>
-                    </div>
-                  </div>
-                  
-                </div>
-              ))}
-            </div>
+            
           </motion.div>
 
           {/* RIGHT: The Holographic Scanner */}
