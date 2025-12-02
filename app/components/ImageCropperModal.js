@@ -59,7 +59,7 @@ export default function ImageCropperModal({
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="relative bg-[#0f1720] border border-cyan-700/20 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-auto"
+        className="relative bg-[#0f1720] border border-cyan-700/20 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* LOADING OVERLAY */}
@@ -71,7 +71,7 @@ export default function ImageCropperModal({
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Crop Image</h2>
+          <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">Crop Image</h2>
 
           {!loading && (
             <button
@@ -145,7 +145,7 @@ export default function ImageCropperModal({
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className=" rounded-lg p-4 flex-1 flex flex-col items-center justify-center"
+                className=" rounded-lg px-4 flex-1 flex flex-col items-center justify-center"
               >
                 {/* Preview Image */}
                 <div className="w-full h-64 bg-black rounded-lg overflow-hidden flex items-center justify-center mb-4">
@@ -213,7 +213,7 @@ export default function ImageCropperModal({
         </div>
 
         {/* Footer with Actions */}
-        <div className="border-t-2 border-cyan-900/30 pt-6">
+        <div className="border-t-2 border-cyan-900/30 pt-4">
           <div className="flex justify-end gap-3">
             <button
               disabled={loading}
