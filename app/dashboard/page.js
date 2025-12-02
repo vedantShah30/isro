@@ -104,12 +104,6 @@ export default function Dashboard() {
             </Link>
 
             <div className="flex items-center gap-4">
-              <Link
-                href="/test"
-                className="px-4 py-2 text-sm text-[#98C1D9] hover:text-white transition"
-              >
-                Speed Test
-              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="px-4 py-2 bg-[#4A1F1F] hover:bg-[#5A2828] text-[#E63946] text-sm font-medium rounded-lg transition"
