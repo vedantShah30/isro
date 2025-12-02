@@ -31,6 +31,7 @@ export default function Sidebar({
         <button
           className="w-10 h-10 rounded-lg hover:bg-white/2 flex items-center justify-center"
           onClick={() => onOpenChats?.()}
+          title="Chat history"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -74,15 +75,12 @@ export default function Sidebar({
           className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
           title="View Routines"
         >
-          <img
-          src='/routine.png'
-          className="w-8 h-8"
-          />
+          <img src="/routine.png" className="w-8 h-8" />
         </button>
         <button
-          onClick={() => window.location.href = '/image'}
+          onClick={() => (window.location.href = "/image")}
           className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
-          title="Go to Image Page"
+          title="Start new chat"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -98,7 +96,6 @@ export default function Sidebar({
               stroke-linecap="round"
             />
           </svg>
-          
         </button>
       </div>
 
