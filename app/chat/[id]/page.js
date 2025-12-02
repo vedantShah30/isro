@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ChatListItem from "../../components/ChatListItem";
 import ChatSection from "../../components/ChatSection";
 import Loader from "../../components/Loader";
@@ -45,6 +45,14 @@ export default function ChatDetailPage() {
   const [reloadChats, setReloadChats] = useState(false);
   const [coordinates, setCoordinates] = useState([]);
   const [selectedQueryId, setSelectedQueryId] = useState(null);
+  const [displayedResponse, setDisplayedResponse] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const typingSpeed = 45; // 45ms per character
+
+  
+  // WebSocket and streaming metadata
+  const wsRef = useRef(null);
+  const streamMetaRef = useRef({}); // streamId -> { prompt, categoryLower }
 
   const fetchChatData = useCallback(async () => {
     if (!chatId) return;
@@ -172,10 +180,41 @@ export default function ChatDetailPage() {
           )
         );
       }
+      const categoryLower = finalCategory.toLowerCase();
+      // If WebSocket is connected, stream the response
+      const ws = wsRef.current;
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || null;
+      const canStream =
+        ws &&
+        ws.readyState === WebSocket.OPEN &&
+        wsUrl !== null;
 
+      if (canStream) {
+        // register metadata so WS handler can persist later
+        streamMetaRef.current[tempId] = {
+          prompt: msg,
+          categoryLower,
+        };
+
+        ws.send(
+          JSON.stringify({
+            type: "start",
+            streamId: tempId,
+            prompt: msg,
+            category: categoryLower,
+            imageUrl,
+          })
+        );
+
+        // In streaming mode, we don't immediately clear analyzing here;
+        // it will be cleared when we receive "done" or "error" from WS.
+        return;
+      }
+
+      // Fallback: current HTTP-based flow (no streaming)
       let aiResponse = "";
       let responseCoordinates = [];
-      const categoryLower = finalCategory.toLowerCase();
+
       if (categoryLower === "captioning") {
         const captionRes = await fetch("/api/models/caption", {
           method: "POST",
@@ -202,7 +241,6 @@ export default function ChatDetailPage() {
         const vqaData = await vqaRes.json();
         aiResponse = vqaData.answer || "No response from VQA model";
       }
-
       const res = await fetch("/api/chats/update", {
         method: "POST",
         credentials: "include",
@@ -244,7 +282,6 @@ export default function ChatDetailPage() {
         );
         return;
       }
-      
 
       const responsesArray = data.chat.responses;
       const savedResponse = responsesArray[responsesArray.length - 1].response;
@@ -284,7 +321,16 @@ export default function ChatDetailPage() {
         )
       );
     } finally {
-      setIsAnalyzing(false);
+      // In streaming mode, we'll stop analyzing when WS sends "done"/"error"
+      const ws = wsRef.current;
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || null;
+      const canStream =
+        ws &&
+        ws.readyState === WebSocket.OPEN &&
+        wsUrl !== null;
+      if (!canStream) {
+        setIsAnalyzing(false);
+      }
     }
   };
 
@@ -347,6 +393,132 @@ export default function ChatDetailPage() {
     loadRoutines();
   }, [session, reloadRoutines]);
 
+  // WebSocket connection for streaming model outputs
+  useEffect(() => {
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+    if (!session || !wsUrl) return;
+
+    // Avoid reconnecting if already open
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("WebSocket connected");
+    };
+
+    ws.onmessage = async (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        const { type, streamId, delta, full, coordinates, error } = msg;
+
+        if (!streamId) return;
+
+        if (type === "partial") {
+          setChatHistory((prev) =>
+            prev.map((c) =>
+              c.id === streamId
+                ? {
+                    ...c,
+                    response: (c.response === "Processing..." ? "" : c.response || "") + delta,
+                  }
+                : c
+            )
+          );
+        } else if (type === "done") {
+          const meta = streamMetaRef.current[streamId];
+          if (!meta) return;
+          const { prompt, categoryLower } = meta;
+
+          // Update UI with final text and coordinates
+          setChatHistory((prev) =>
+            prev.map((c) =>
+              c.id === streamId
+                ? {
+                    ...c,
+                    response: full,
+                    coordinates:
+                      categoryLower === "grounding" ? coordinates || [] : c.coordinates || [],
+                  }
+                : c
+            )
+          );
+
+          // Persist to DB using existing chats/update API
+          try {
+            const res = await fetch("/api/chats/update", {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                imageUrl: imageUrl,
+                routineId: null,
+                responses: [
+                  {
+                    type: categoryLower,
+                    prompt,
+                    response: full,
+                    coordinates:
+                      categoryLower === "grounding" ? coordinates || [] : [],
+                  },
+                ],
+                metadata: {
+                  uploadedAt: chat?.metadata?.uploadedAt || new Date(),
+                  processingTime: 0,
+                  imageSize: chat?.metadata?.imageSize || "1024x1024",
+                },
+              }),
+            });
+            
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+              setChat(data.chat);
+              setActiveChat(data.chat);
+              setReloadChats((prev) => !prev);
+            } else {
+              console.error("Failed to save streamed chat:", data.error);
+            }
+          } catch (err) {
+            console.error("Error saving streamed chat:", err);
+          } finally {
+            setIsAnalyzing(false);
+          }
+
+          delete streamMetaRef.current[streamId];
+        } else if (type === "error") {
+          setChatHistory((prev) =>
+            prev.map((c) =>
+              c.id === streamId
+                ? {
+                    ...c,
+                    response: `Error: ${error}`,
+                    error: true,
+                  }
+                : c
+            )
+          );
+          setIsAnalyzing(false);
+        }
+      } catch (err) {
+        console.error("WebSocket message parse error:", err);
+      }
+    };
+
+    ws.onerror = (e) => {
+      console.error("WebSocket error:", e);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket closed");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [session, imageUrl, chat, setChatHistory]);
+
   if (status === "loading" || loading) {
     return <Loader />;
   }
@@ -370,7 +542,7 @@ export default function ChatDetailPage() {
       </div>
     );
   }
-
+     
   const handleImageSelect = (file, cloudUrl) => {
     // Handle image selection if needed
     setImageUrl(cloudUrl);
