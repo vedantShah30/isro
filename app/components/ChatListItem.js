@@ -24,7 +24,7 @@ export default function ChatListItem({
       className={`relative p-3 rounded-lg mb-2 cursor-pointer transition-all border
         ${
           isActive
-            ? "bg-cyan-900/40 border-cyan-500 shadow-lg"
+            ? "bg-[#1E2A38] border-[#2C384A] border-[1.5px] shadow-lg"
             : "bg-white/5 border-transparent hover:bg-white/10"
         }`}
       onMouseEnter={() => setHovered(true)}

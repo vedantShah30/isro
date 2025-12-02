@@ -40,15 +40,19 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       setPreview(externalImage);
     }
   }, [externalImage]);
+
+  const hasOverlay = coordinates && coordinates.length > 0 && setBoundingBox;
+  const overlayImageSrc = hasOverlay && originalImageUrl ? originalImageUrl : preview;
+
   useEffect(() => {
-    if (preview) {
-      const img = new Image();
-      img.onload = () => {
-        setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-      img.src = preview;
-    }
-  }, [preview]);
+    if (!overlayImageSrc) return;
+
+    const img = new Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = overlayImageSrc;
+  }, [overlayImageSrc]);
 
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
@@ -171,7 +175,8 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
     setTempImageForCrop(null);
   };
   const renderBoundingBoxes = () => {
-    if (!coordinates || coordinates.length === 0 || !preview) return null;
+    // was: if (!coordinates || coordinates.length === 0 || !preview) return null;
+    if (!coordinates || coordinates.length === 0 || !overlayImageSrc) return null;
     
     // If we don't have image dimensions yet, return null
     if (imageDimensions.width === 0 || imageDimensions.height === 0) return null;
@@ -255,7 +260,8 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
             <div>
               <div className="relative h-[350px] rounded-lg overflow-hidden">
                 <img
-                  src={preview}
+                  // was: src={preview}
+                  src={overlayImageSrc || preview}
                   alt="Preview"
                   className="w-full h-full object-cover cursor-pointer"
                   onClick={(e) => {

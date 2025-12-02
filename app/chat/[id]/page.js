@@ -568,7 +568,7 @@ export default function ChatDetailPage() {
           <div className="fixed right-0 top-0 h-full w-80 bg-[#0f1720] border-l border-cyan-800/20 p-4 overflow-y-auto z-50 shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-cyan-400">Your Chats</h2>
+              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500 ">Your Chats</h2>
 
               <button
                 onClick={() => setIsChatListOpen(false)}

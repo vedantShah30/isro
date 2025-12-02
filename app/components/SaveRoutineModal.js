@@ -72,7 +72,7 @@ export default function SaveRoutineModal({
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-md rounded-2xl bg-gradient-to-br from-[#0f1720] to-[#0a0f19] border border-cyan-500/20 shadow-2xl overflow-hidden"
+            className="relative z-10 w-full max-w-md rounded-2xl bg-gradient-to-br from-[#0f1720] to-[#0a0f19]  border-[#2C384A] border-[1.5px] overflow-hidden"
           >
             {/* Header with gradient accent */}
             <div className="relative pt-8 pb-4 px-8">
@@ -82,7 +82,7 @@ export default function SaveRoutineModal({
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   <svg
-                    className="w-6 h-6 text-cyan-400"
+                    className="w-6 h-6 text-cyan-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -98,7 +98,7 @@ export default function SaveRoutineModal({
                 </h2>
                 <p className="text-slate-400 text-sm">
                   Save your current chat as a reusable routine with{" "}
-                  <span className="text-cyan-400 font-semibold">
+                  <span className="text-cyan-400 font-bold">
                     {promptCount}
                   </span>{" "}
                   prompt{promptCount !== 1 ? "s" : ""}
@@ -107,7 +107,7 @@ export default function SaveRoutineModal({
             </div>
 
             {/* Content */}
-            <div className="px-8 py-6 space-y-4">
+            <div className="px-8 py-4 space-y-4">
               {/* Routine Name Input */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-200">
@@ -124,7 +124,7 @@ export default function SaveRoutineModal({
                   onKeyDown={handleKeyDown}
                   placeholder="e.g., Urban Analysis Workflow"
                   disabled={isSaving}
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#728a99] focus:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   autoFocus
                 />
               </div>
@@ -142,7 +142,7 @@ export default function SaveRoutineModal({
                   placeholder="Describe what this routine does..."
                   disabled={isSaving}
                   rows="3"
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:bg-slate-800 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#728a99] focus:bg-slate-800 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export default function SaveRoutineModal({
               <button
                 onClick={handleSave}
                 disabled={!title.trim() || isSaving}
-                className="px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="pr-4 pl-2 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isSaving ? (
                   <>
