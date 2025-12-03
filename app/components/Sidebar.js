@@ -86,22 +86,22 @@ export default function Sidebar({
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="26"
-            height="26"
+            width="32"
+            height="32"
             viewBox="0 0 24 24"
             fill="none"
           >
             <path
               d="M6 2C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V9.82843C20 9.29799 19.7893 8.78929 19.4142 8.41421L14.5858 3.58579C14.2107 3.21071 13.702 3 13.1716 3H6Z"
               stroke="white"
-              strokeWidth="1.5"
+              strokeWidth="0.9"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
               d="M14 3V7C14 8.10457 14.8954 9 16 9H20"
               stroke="white"
-              strokeWidth="1.5"
+              strokeWidth="0.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
