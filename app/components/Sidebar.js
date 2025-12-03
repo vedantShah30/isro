@@ -6,6 +6,7 @@ export default function Sidebar({
   onOpenRoutines,
   onOpenChats,
   onSaveRoutine,
+  onGeneratePdf,
 }) {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-20 bg-[#0b1116] border-r border-cyan-600/10 flex flex-col items-center justify-between py-6 space-y-6 z-30">
@@ -76,6 +77,59 @@ export default function Sidebar({
           title="View Routines"
         >
           <img src="/routine.png" className="w-8 h-8" />
+        </button>
+        {/* generate PDF / summary */}
+        <button
+          onClick={() => onGeneratePdf?.()}
+          className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+          title="Download summary"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path
+              d="M6 2C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V9.82843C20 9.29799 19.7893 8.78929 19.4142 8.41421L14.5858 3.58579C14.2107 3.21071 13.702 3 13.1716 3H6Z"
+              stroke="white"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M14 3V7C14 8.10457 14.8954 9 16 9H20"
+              stroke="white"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M8 14H11"
+              stroke="#0A0F19"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M8 17H12"
+              stroke="#0A0F19"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <text
+              x="12.5"
+              y="18"
+              textAnchor="middle"
+              fill="white"
+              fontSize="5"
+              fontFamily="sans-serif"
+            >
+              PDF
+            </text>
+          </svg>
         </button>
         <button
           onClick={() => (window.location.href = "/image")}

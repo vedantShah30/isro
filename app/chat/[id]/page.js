@@ -394,6 +394,200 @@ export default function ChatDetailPage() {
     }
   };
 
+  const handleGenerateSummaryPdf = async () => {
+    if (!imageUrl || chatHistory.length === 0) {
+      setToastMessage("No image or chat history to summarize");
+      setToastType("error");
+      setShowToast(true);
+      return;
+    }
+
+    try {
+      const { jsPDF } = await import("jspdf");
+
+      const loadImageElement = (src) =>
+        new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = src;
+        });
+
+      const getVerticesFromBox = (box) => {
+        let vertices = [];
+        if (Array.isArray(box)) {
+          vertices = box;
+        } else if (box && typeof box === "object") {
+          if (box.C0 && box.C1 && box.C2 && box.C3) {
+            vertices = [box.C0, box.C1, box.C2, box.C3];
+          } else {
+            vertices = Object.values(box).filter(
+              (v) => v && typeof v === "object" && "x" in v && "y" in v
+            );
+          }
+        }
+        return vertices.filter(
+          (v) =>
+            v &&
+            typeof v === "object" &&
+            typeof v.x === "number" &&
+            typeof v.y === "number"
+        );
+      };
+
+      const createGroundingOverlay = async (baseImgSrc, boxes) => {
+        const imgEl = await loadImageElement(baseImgSrc);
+        const canvas = document.createElement("canvas");
+        canvas.width = imgEl.naturalWidth;
+        canvas.height = imgEl.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(imgEl, 0, 0);
+
+        boxes.forEach((box) => {
+          const vertices = getVerticesFromBox(box);
+          if (vertices.length < 4) return;
+
+          const isNormalized = vertices.some((v) => v.x <= 1 && v.y <= 1);
+
+          ctx.beginPath();
+          vertices.forEach((v, index) => {
+            const x = isNormalized ? v.x * canvas.width : v.x;
+            const y = isNormalized ? v.y * canvas.height : v.y;
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.closePath();
+          ctx.fillStyle = "rgba(0, 238, 44, 0.15)";
+          ctx.strokeStyle = "#00EE2C";
+          ctx.lineWidth = 4;
+          ctx.fill();
+          ctx.stroke();
+        });
+
+        return canvas.toDataURL("image/jpeg", 0.9);
+      };
+
+      const baseImgEl = await loadImageElement(imageUrl);
+      const baseCanvas = document.createElement("canvas");
+      baseCanvas.width = baseImgEl.naturalWidth;
+      baseCanvas.height = baseImgEl.naturalHeight;
+      const baseCtx = baseCanvas.getContext("2d");
+      baseCtx.drawImage(baseImgEl, 0, 0);
+      const baseImgDataUrl = baseCanvas.toDataURL("image/jpeg", 0.9);
+
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 40;
+      const usableWidth = pageWidth - margin * 2;
+
+      const addNewPageIfNeeded = (requiredHeight) => {
+        if (currentY + requiredHeight > pageHeight - margin) {
+          doc.addPage();
+          currentY = margin;
+        }
+      };
+
+      let currentY = margin;
+
+      doc.setFontSize(20);
+      doc.text("Chat Summary", margin, currentY);
+      currentY += 26;
+
+      doc.setFontSize(11);
+      doc.setTextColor(120);
+      doc.text(
+        "Image overview with user's prompts and AI answers.",
+        margin,
+        currentY
+      );
+      currentY += 18;
+
+      const imgDisplayWidth = usableWidth;
+      const imgDisplayHeight =
+        (baseCanvas.height * imgDisplayWidth) / baseCanvas.width;
+
+      addNewPageIfNeeded(imgDisplayHeight + 20);
+      doc.addImage(
+        baseImgDataUrl,
+        "JPEG",
+        margin,
+        currentY,
+        imgDisplayWidth,
+        imgDisplayHeight
+      );
+      currentY += imgDisplayHeight + 24;
+
+      doc.setTextColor(0);
+      doc.setFontSize(12);
+
+      for (let i = 0; i < chatHistory.length; i++) {
+        const item = chatHistory[i];
+
+        const question = `Q${i + 1}: ${item.query || ""}`;
+        const answer = item.response || "";
+
+        const questionLines = doc.splitTextToSize(question, usableWidth);
+        const answerLines = doc.splitTextToSize(answer, usableWidth);
+
+        let blockHeight =
+          questionLines.length * 16 + 20 + answerLines.length * 14 + 16;
+
+        const hasGrounding =
+          item.category === "Grounding" &&
+          item.coordinates &&
+          item.coordinates.length > 0;
+
+        if (hasGrounding) {
+          blockHeight += imgDisplayHeight + 16;
+        }
+
+        addNewPageIfNeeded(blockHeight);
+
+        doc.setFontSize(13);
+        doc.setTextColor(30);
+        doc.text(questionLines, margin, currentY);
+        currentY += questionLines.length * 16 + 6;
+
+        if (hasGrounding) {
+          const overlayDataUrl = await createGroundingOverlay(
+            imageUrl,
+            item.coordinates
+          );
+
+          addNewPageIfNeeded(imgDisplayHeight + 16);
+          doc.addImage(
+            overlayDataUrl,
+            "JPEG",
+            margin,
+            currentY,
+            imgDisplayWidth,
+            imgDisplayHeight
+          );
+          currentY += imgDisplayHeight + 10;
+        }
+
+        doc.setFontSize(11);
+        doc.setTextColor(22, 197, 94);
+        doc.text("Answer", margin, currentY);
+        currentY += 14;
+
+        doc.setFontSize(11);
+        doc.setTextColor(60);
+        doc.text(answerLines, margin, currentY);
+        currentY += answerLines.length * 14 + 16;
+      }
+
+      doc.save("chat-summary.pdf");
+    } catch (err) {
+      console.error("Failed to generate PDF", err);
+      setToastMessage("Failed to generate PDF");
+      setToastType("error");
+      setShowToast(true);
+    }
+  };
+
   const loadUserChats = async () => {
     try {
       const res = await fetch("/api/chats/get", {
@@ -535,6 +729,7 @@ export default function ChatDetailPage() {
         onOpenRoutines={() => setIsRoutinesOpen(true)}
         onOpenChats={loadUserChats}
         onSaveRoutine={handleSaveRoutineClick}
+        onGeneratePdf={handleGenerateSummaryPdf}
       />
 
       {/* Main content area */}
