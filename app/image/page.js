@@ -11,8 +11,6 @@ import Scene3D from "../components/Scene3D";
 export default function ImagePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
-  // If the user is not authenticated, alert and redirect to landing
   useEffect(() => {
     if (status === "unauthenticated") {
       alert("Not Authenticated");
@@ -26,8 +24,6 @@ export default function ImagePage() {
   const [currentImage, setCurrentImage] = useState(null);
   const [activeChat, setActiveChat] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-
-  // Handles the selection of an image file
   const handleImageSelect = (file, cloudUrl) => {
     if (activeChat) {
       setActiveChat(null);
@@ -39,17 +35,13 @@ export default function ImagePage() {
     setImagePreview(cloudUrl);
     setCurrentImage(cloudUrl);
   };
-
-  // Handles submitting the image for analysis
   const handleSubmitImage = async () => {
     if (!imagePreview) {
       alert("Please upload an image first");
       return;
     }
-
     try { 
       setIsAnalyzing(true);
-      // Create a new chat with the image
       const res = await fetch("/api/chats/create", {
         method: "POST",
         credentials: "include",
@@ -66,15 +58,11 @@ export default function ImagePage() {
         }),
       });
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         alert(data.error || "Failed to create chat");
         return;
       }
-
       const chatId = data.chat._id;
-
-      // Redirect to chat page with the new chat ID
       router.push(`/chat/${chatId}`);
     } catch (err) {
       console.error("Error creating chat:", err);
@@ -83,36 +71,28 @@ export default function ImagePage() {
       setIsAnalyzing(false);
     }
   };
-
   // Uploads the image to Cloudinary
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
-
     setIsUploading(true);
-
     const res = await fetch("/api/upload", {
       method: "POST",
       body: formData,
     });
-
     const data = await res.json();
     setIsUploading(false);
-
     if (!data.success) {
       console.error("Cloudinary upload failed:", data.error);
       return null;
     }
     return data.url;
   };
-
-  // Handles file input from the user
   const handleFileInput = async (file) => {
     if (!file || !file.type.startsWith("image/")) {
       alert("Please upload a valid image file");
       return;
     }
-
     // Upload to Cloudinary
     const cloudUrl = await uploadToCloudinary(file);
     if (cloudUrl) {
@@ -121,8 +101,6 @@ export default function ImagePage() {
       alert("Failed to upload image to cloud storage");
     }
   };
-
-  // Handles drag-and-drop image input
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
@@ -131,14 +109,10 @@ export default function ImagePage() {
       handleFileInput(file);
     }
   };
-
-  // Handles drag over event for file upload
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
   };
-
-  // Handles drag leave event for file upload
   const handleDragLeave = (e) => {
     e.preventDefault();
     setIsDragging(false);
@@ -146,24 +120,15 @@ export default function ImagePage() {
 
   return (
     <div className="min-h-screen w-full bg-black relative overflow-hidden">
-      {/* Show loader during upload or analysis */}
       {(isUploading || isAnalyzing) && <Loader />}
-
-      {/* Header area inside flow — home/logo button aligned to the right of the upload area */}
-      {/* Placed before the upload wrapper so it flows naturally with the content */}
-
-      {/* Main Content */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 ">
         <Scene3D />
-
-        {/* Upload Area */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           className="w-full max-w-4xl"
         >
-          {/* top row: allows placing the logo to the right without absolute positioning */}
           <div className="w-full flex items-center justify-end mb-4 pointer-events-auto">
             <Link href="/dashboard">
               <span
@@ -203,7 +168,6 @@ export default function ImagePage() {
                   onChange={(e) => handleFileInput(e.target.files[0])}
                   className="hidden"
                 />
-
                 <label
                   htmlFor="fileInput"
                   onDrop={handleDrop}
@@ -222,7 +186,6 @@ export default function ImagePage() {
                   }}
                 >
                   <div className="relative py-32 px-8 text-center">
-                    {/* Upload Icon */}
                     <motion.div
                       animate={{
                         y: [0, -10, 0],
@@ -250,7 +213,6 @@ export default function ImagePage() {
                         </svg>
                       </div>
                     </motion.div>
-
                     <h3 className="text-3xl font-bold text-white mb-3">
                       Upload Satellite Imagery
                     </h3>
@@ -258,7 +220,6 @@ export default function ImagePage() {
                       Drag and drop your satellite image here, or click to
                       browse
                     </p>
-
                     <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
                       <span className="flex items-center gap-2">
                         <svg
@@ -305,7 +266,6 @@ export default function ImagePage() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="relative"
               >
-                {/* Image Preview Card */}
                 <div
                   className="rounded-3xl overflow-hidden border-2 border-cyan-500/30 bg-gray-900/40 backdrop-blur-xl max-w-[900px] mx-auto"
                   style={{ boxShadow: "0 0 60px rgba(6, 182, 212, 0.2)" }}
@@ -317,10 +277,7 @@ export default function ImagePage() {
                       className="w-full h-full object-cover"
                     />
 
-                    {/* Overlay Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-
-                    {/* Remove Button */}
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -346,8 +303,6 @@ export default function ImagePage() {
                     </button>
                   </div>
                 </div>
-
-                {/* Action Button */}
                 <motion.button
                   onClick={handleSubmitImage}
                   disabled={isAnalyzing}
@@ -403,8 +358,6 @@ export default function ImagePage() {
                       </>
                     )}
                   </span>
-
-                  {/* Animated background effect */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                     animate={{

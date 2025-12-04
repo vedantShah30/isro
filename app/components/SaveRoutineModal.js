@@ -1,8 +1,6 @@
 "use client";
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
 export default function SaveRoutineModal({
   open,
   onClose,
@@ -13,16 +11,13 @@ export default function SaveRoutineModal({
   const [description, setDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
-
   const handleSave = async () => {
     if (!title.trim()) {
       setError("Routine name is required");
       return;
     }
-
     setIsSaving(true);
     setError("");
-
     try {
       await onSave(title.trim(), description.trim());
       setTitle("");
@@ -34,7 +29,6 @@ export default function SaveRoutineModal({
       setIsSaving(false);
     }
   };
-
   const handleClose = () => {
     if (!isSaving) {
       setTitle("");
@@ -43,7 +37,6 @@ export default function SaveRoutineModal({
       onClose?.();
     }
   };
-
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && e.ctrlKey) {
       handleSave();
@@ -62,10 +55,7 @@ export default function SaveRoutineModal({
           className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={handleClose}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-
-          {/* Modal */}
           <motion.div
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -74,11 +64,8 @@ export default function SaveRoutineModal({
             onClick={(e) => e.stopPropagation()}
             className="relative z-10 w-full max-w-md rounded-2xl bg-gradient-to-br from-[#0f1720] to-[#0a0f19]  border-[#2C384A] border-[1.5px] overflow-hidden"
           >
-            {/* Header with gradient accent */}
             <div className="relative pt-8 pb-4 px-8">
-              {/* Accent line */}
               <div className="absolute top-0 left-0 right-0 h-1" />
-
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   <svg
@@ -105,10 +92,7 @@ export default function SaveRoutineModal({
                 </p>
               </div>
             </div>
-
-            {/* Content */}
             <div className="px-8 py-4 space-y-4">
-              {/* Routine Name Input */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-200">
                   Routine Name
@@ -128,8 +112,6 @@ export default function SaveRoutineModal({
                   autoFocus
                 />
               </div>
-
-              {/* Description Input */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-200">
                   Description
@@ -145,8 +127,6 @@ export default function SaveRoutineModal({
                   className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#728a99] focus:bg-slate-800 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
-
-              {/* Error Message */}
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -169,8 +149,6 @@ export default function SaveRoutineModal({
                   <p className="text-red-400 text-sm">{error}</p>
                 </motion.div>
               )}
-
-              {/* Info Box */}
               <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg flex items-start gap-3">
                 <svg
                   className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"
@@ -191,8 +169,6 @@ export default function SaveRoutineModal({
                 </p>
               </div>
             </div>
-
-            {/* Footer */}
             <div className="px-8 py-4 bg-black/20 flex items-center justify-end gap-3 border-t border-slate-700/50">
               <button
                 onClick={handleClose}

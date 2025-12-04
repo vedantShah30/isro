@@ -1,5 +1,4 @@
 'use client';
-
 import { motion } from 'framer-motion';
 import ImageAnnotation from './ImageAnnotation';
 
@@ -54,7 +53,6 @@ export default function ResultsDisplay({ results, isAnalyzing, imagePreview }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Query Type Badge */}
           <div className="flex items-center space-x-2 mb-4">
             <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs font-medium text-blue-300">
               {results.queryType === 'captioning' && 'Image Captioning'}
@@ -62,15 +60,12 @@ export default function ResultsDisplay({ results, isAnalyzing, imagePreview }) {
               {results.queryType === 'vqa' && 'Visual Q&A'}
             </span>
           </div>
-
-          {/* Results Content */}
           {results.queryType === 'captioning' && results.caption && (
             <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
               <h3 className="text-sm font-medium text-slate-300 mb-2">Generated Caption</h3>
               <p className="text-slate-300 text-sm leading-relaxed">{results.caption}</p>
             </div>
           )}
-
           {results.queryType === 'grounding' && results.boundingBoxes && (
             <div className="space-y-4">
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
@@ -80,7 +75,6 @@ export default function ResultsDisplay({ results, isAnalyzing, imagePreview }) {
                   boundingBoxes={results.boundingBoxes}
                 />
               </div>
-              
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
                 <h3 className="text-sm font-medium text-slate-300 mb-2">Detected Objects</h3>
                 <p className="text-slate-300 text-sm mb-3">Found {results.count} object(s)</p>
@@ -100,7 +94,6 @@ export default function ResultsDisplay({ results, isAnalyzing, imagePreview }) {
               </div>
             </div>
           )}
-
           {results.queryType === 'vqa' && results.answer && (
             <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
               <h3 className="text-sm font-medium text-slate-300 mb-2">Answer</h3>
@@ -113,8 +106,6 @@ export default function ResultsDisplay({ results, isAnalyzing, imagePreview }) {
           )}
         </div>
       )}
-
-      {/* Performance Metrics */}
       {hasResults && (
         <div className="mt-6 pt-6 border-t border-slate-700/50">
           <h3 className="text-sm font-medium text-slate-300 mb-3">Performance Metrics</h3>

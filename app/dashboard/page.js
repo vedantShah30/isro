@@ -193,15 +193,6 @@ export default function Dashboard() {
                           {routine.prompts?.length || 0} prompts
                         </p>
                       </div>
-                      {/* <span
-                        className={`px-2 py-1 text-xs rounded ${
-                          routine.isActive
-                            ? "bg-[#1D3B29] text-[#2ECC71]"
-                            : "bg-[#2A2F37] text-[#98C1D9]"
-                        }`}
-                      >
-                        {routine.isActive ? "Active" : "Inactive"}
-                      </span> */}
                     </div>
                   </div>
                 ))}

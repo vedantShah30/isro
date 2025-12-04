@@ -1,8 +1,6 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
 export default function RoutinesModal({
   open,
   onClose,
@@ -12,7 +10,6 @@ export default function RoutinesModal({
   const [selectedRoutine, setSelectedRoutine] = useState(null);
   const [selectedPrompts, setSelectedPrompts] = useState([]);
   const [editedPrompts, setEditedPrompts] = useState({});
-
   useEffect(() => {
     function handleEscape(e) {
       if (e.key === "Escape") {
@@ -29,32 +26,27 @@ export default function RoutinesModal({
       return () => window.removeEventListener("keydown", handleEscape);
     }
   }, [open, onClose, selectedRoutine]);
-
   const handleRoutineClick = (routine) => {
     setSelectedRoutine(routine);
     setSelectedPrompts(routine.prompts.map((_, i) => i));
     setEditedPrompts({});
   };
-
   const handleBack = () => {
     setSelectedRoutine(null);
     setSelectedPrompts([]);
     setEditedPrompts({});
   };
-
   const togglePrompt = (index) => {
     setSelectedPrompts((prev) =>
       prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
     );
   };
-
   const handlePromptEdit = (index, newText) => {
     setEditedPrompts((prev) => ({
       ...prev,
       [index]: newText,
     }));
   };
-
   const handleRunRoutine = () => {
     const selectedData = selectedPrompts.map((i) => ({
       ...selectedRoutine.prompts[i],
@@ -75,10 +67,7 @@ export default function RoutinesModal({
           className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={onClose}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-
-          {/* Modal */}
           <motion.div
             initial={{ y: 20, opacity: 0, scale: 0.98 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -87,7 +76,6 @@ export default function RoutinesModal({
             onClick={(e) => e.stopPropagation()}
             className="relative z-10 w-[min(780px,78%)] max-h-[85vh] flex flex-col rounded-2xl bg-[#000] border shadow-2xl border-white overflow-hidden"
           >
-            {/* Header */}
             <div className=" px-6 py-4">
               <div className="flex items-center justify-center gap-4 relative">
                 {selectedRoutine && (
@@ -140,11 +128,8 @@ export default function RoutinesModal({
                 </button>
               </div>
             </div>
-
-            {/* Content - Scrollable */}
             <div className="flex-1 overflow-auto px-24 py-6">
               {!selectedRoutine ? (
-                // Routines List View
                 routines.length === 0 ? (
                   <div className="text-center py-16">
                     <svg
@@ -200,14 +185,12 @@ export default function RoutinesModal({
                   </div>
                 )
               ) : (
-                // Prompt Selection View
                 <div className="space-y-1">
                   {selectedRoutine.prompts.map((prompt, idx) => (
                     <div
                       key={idx}
                       className="w-full text-left py-3 border-b border-b-slate-700 flex items-center gap-4"
                     >
-                      {/* Radio-style Checkbox */}
                       <button
                         onClick={() => togglePrompt(idx)}
                         className="flex-shrink-0"
@@ -224,8 +207,6 @@ export default function RoutinesModal({
                           )}
                         </div>
                       </button>
-
-                      {/* Editable Prompt Content */}
                       <div className="flex-1">
                         <input
                           type="text"
@@ -241,8 +222,6 @@ export default function RoutinesModal({
                           placeholder="Enter prompt"
                         />
                       </div>
-
-                      {/* Type Badge */}
                       <span className="text-xs text-slate-400 flex-shrink-0 capitalize">
                         {prompt.type}
                       </span>
@@ -251,7 +230,6 @@ export default function RoutinesModal({
                 </div>
               )}
             </div>
-
             {/* Footer - Only show when routine is selected */}
             {selectedRoutine && (
               <div className="  px-6 py-4">

@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const Loader = () => {
   const [statusText, setStatusText] = useState("INITIALIZING SATELLITE UPLINK");
-  
-  // Cycle through satellite/imagery analysis related phrases
   useEffect(() => {
     const phases = [
       "ACQUIRING SATELLITE IMAGE",
@@ -13,44 +11,31 @@ const Loader = () => {
       "GENERATING INSIGHTS",
       "PREPARING RESULTS"
     ];
-    
     let i = 0;
     const interval = setInterval(() => {
       i = (i + 1) % phases.length;
       setStatusText(phases[i]);
     }, 1800);
-
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#030712] text-white overflow-hidden font-mono">
-      
-      {/* --- Background Ambience --- */}
       <div className="absolute inset-0 z-0">
-         {/* Subtle Grid */}
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-[100px] opacity-20 animate-pulse" />
       </div>
-
-      {/* --- Main Loader Structure --- */}
       <div className="relative z-10 w-64 h-64 flex items-center justify-center">
-        
-        {/* Ring 1: Outer Slow Orbit */}
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
           className="absolute inset-0 rounded-full border border-white/10 border-t-white/50 border-r-transparent"
         />
-        
-        {/* Ring 2: Middle Counter-Orbit */}
         <motion.div 
           animate={{ rotate: -360 }}
           transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
           className="absolute inset-4 rounded-full border border-zinc-800 border-b-white/80 border-l-transparent"
         />
-
-        {/* Ring 3: Inner Fast Spinner (The "Scanner") */}
         <motion.div 
           animate={{ rotate: 360, scale: [1, 1.05, 1] }}
           transition={{ 
@@ -59,8 +44,6 @@ const Loader = () => {
           }}
           className="absolute inset-16 rounded-full border-2 border-transparent border-t-white border-l-white/20 shadow-[0_0_15px_rgba(255,255,255,0.5)]"
         />
-
-        {/* Center Core: The "Payload" */}
         <div className="relative flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.3)]">
            <motion.div
              animate={{ scale: [1, 0.8, 1], opacity: [1, 0.5, 1] }}
@@ -70,8 +53,6 @@ const Loader = () => {
               <div className="w-2 h-2 bg-white rounded-full" />
            </motion.div>
         </div>
-        
-        {/* Orbital Particles */}
         <motion.div
            animate={{ rotate: 360 }}
            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
@@ -79,10 +60,7 @@ const Loader = () => {
         >
            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full shadow-[0_0_10px_white]" />
         </motion.div>
-
       </div>
-
-      {/* --- Text & Data Readout --- */}
       <div className="mt-12 flex flex-col items-center gap-2 z-10">
         <div className="flex items-center gap-3">
             <span className="relative flex h-2 w-2">
@@ -99,17 +77,13 @@ const Loader = () => {
               {statusText}
             </motion.span>
         </div>
-        
         <div className="text-[10px] text-zinc-500 tracking-widest flex gap-4 mt-2">
            <span>SAT_NODE_01</span>
            <span>::</span>
            <span>STATUS: ACTIVE</span>
         </div>
       </div>
-      
-      {/* Decorative Scan Line */}
       <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50"></div>
-
     </div>
   );
 };
