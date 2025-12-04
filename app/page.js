@@ -35,39 +35,6 @@ export default function LandingPage() {
     }
   };
 
-  const features = [
-    {
-      title: "AI Captioning",
-      desc: "Generate comprehensive descriptions of satellite imagery",
-      icon: <MessageSquare className="w-6 h-6" />,
-      color: "from-cyan-400 to-blue-500"
-    },
-    {
-      title: "Object Grounding",
-      desc: "Localize and identify objects with precise oriented bounding boxes.",
-      icon: <Scan className="w-6 h-6" />,
-      color: "from-emerald-400 to-teal-500"
-    },
-    {
-      title: "Visual Q&A",
-      desc: "Answer complex questions about geometric and semantic attributes.",
-      icon: <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>,
-      color: "from-violet-400 to-purple-500"
-    }
-  ];
-
   return (
     <div className="min-h-screen text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
       {/* Background Elements */}
@@ -87,7 +54,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <svg
+              {/* <svg
                 className="w-10 h-10 text-cyan-400"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -99,9 +66,10 @@ export default function LandingPage() {
                   strokeWidth="2"
                 />
                 <path d="M2 12h20" strokeWidth="2" />
-              </svg>
+              </svg> */}
+              <img src="/isro.svg" className='w-14' />
               <div>
-                <h1 className="text-xl font-bold text-white">SAC - ISRO</h1>
+                <h1 className="text-xl font-bold text-white pl-3">SAC - ISRO</h1>
                 <p className="text-xs text-slate-400">
                   Satellite Imagery Analysis
                 </p>

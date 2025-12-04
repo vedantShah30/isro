@@ -45,6 +45,51 @@ export default function ChatDetailPage() {
   const [reloadChats, setReloadChats] = useState(false);
   const [coordinates, setCoordinates] = useState([]);
   const [selectedQueryId, setSelectedQueryId] = useState(null);
+  const [isGsdPending, setIsGsdPending] = useState(false);
+  const [pendingGsdPrompt, setPendingGsdPrompt] = useState("");
+
+  const gsd_keywords = [
+    "area",
+    "dimensions",
+    "length",
+    "width",
+    "breadth",
+    "height",
+    "depth",
+    "perimeter",
+    "circumference",
+    "radius",
+    "diameter",
+    "footprint",
+    "volume",
+    "size",
+    "distance",
+    "spacing",
+    "extent",
+    "coverage",
+    "span",
+    "proximity",
+    "meter",
+    "meters",
+    "kilometer",
+    "km",
+    "centimeter",
+    "cm",
+    "feet",
+    "foot",
+    "ft",
+    "yard",
+    "yd",
+    "mile",
+    "mi",
+    "acre",
+    "acres",
+    "hectare",
+    "hectares",
+    "sqm",
+    "sqft",
+  ];
+
   const fetchChatData = useCallback(async () => {
     if (!chatId) return;
 
@@ -139,14 +184,82 @@ export default function ChatDetailPage() {
 
     const msg = message.trim();
     const tempId = Date.now();
-    let finalCategory = category;
+
+    const finalCategory = category || "Captioning";
+    if (!isGsdPending) {
+      const containsGsd = gsd_keywords.some((word) =>
+        msg.toLowerCase().includes(word.toLowerCase())
+      );
+
+      if (containsGsd) {
+        setPendingGsdPrompt(msg);
+        setIsGsdPending(true);
+        const tempChat = {
+          id: tempId,
+          query: msg,
+          response:
+            "You mentioned GSD. Please provide a scale value (for example: 0.5, 1.0, 2.0).",
+          timestamp: new Date(),
+          category: finalCategory,
+          error: false,
+          coordinates: [],
+        };
+
+        setChatHistory((prev) => [...prev, tempChat]);
+        setInputMessage("");
+        return;
+      }
+    }
+    if (isGsdPending) {
+      const scaleValue = parseFloat(msg);
+
+      if (isNaN(scaleValue)) {
+        const tempChat = {
+          id: tempId,
+          query: msg,
+          response: "Please enter a valid number for scale.",
+          timestamp: new Date(),
+          category: finalCategory,
+          error: true,
+          coordinates: [],
+        };
+        setChatHistory((prev) => [...prev, tempChat]);
+        setInputMessage("");
+        return;
+      }
+
+      const combinedPrompt = `${pendingGsdPrompt} | SCALE: ${scaleValue}`;
+
+      // Reset state
+      setIsGsdPending(false);
+      setPendingGsdPrompt("");
+
+      // -------------- NEW FIXED BEHAVIOR --------------
+      // Show ONLY user’s scale message (msg)
+      const tempChat = {
+        id: tempId,
+        query: msg, // ONLY "0.5"
+        response: "Processing...",
+        timestamp: new Date(),
+        category: finalCategory,
+        error: false,
+        coordinates: [],
+      };
+
+      setChatHistory((prev) => [...prev, tempChat]);
+      setInputMessage("");
+
+      // Call backend manually with combinedPrompt
+      await processFinalPrompt(combinedPrompt, finalCategory, tempId);
+      return;
+    }
 
     const tempChat = {
       id: tempId,
       query: msg,
       response: "Processing...",
       timestamp: new Date(),
-      category: finalCategory || "Captioning",
+      category: finalCategory,
       error: false,
       coordinates: [],
     };
@@ -156,31 +269,32 @@ export default function ChatDetailPage() {
     try {
       setIsAnalyzing(true);
 
-      let aiResponse = "";
-      let responseCoordinates = [];
       const categoryLower = finalCategory.toLowerCase();
-      
+      const categoryUpper = finalCategory.toUpperCase();
+
       const mlRes = await fetch("/api/ml", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl, query: msg}),
+        body: JSON.stringify({ imageUrl, query: msg, type: categoryUpper }),
       });
-      
+
       const mlData = await mlRes.json();
-      
-      if (!mlRes.ok) {
-        throw new Error(mlData.error || "Error from ML model");
-      }
+
+      if (!mlRes.ok) throw new Error(mlData.error || "Error from ML model");
+
+      let aiResponse = "";
+      let responseCoordinates = [];
 
       if (categoryLower === "captioning") {
-        aiResponse = mlData.caption || mlData.response || JSON.stringify(mlData);
+        aiResponse =
+          mlData.caption || mlData.response || JSON.stringify(mlData);
       } else if (categoryLower === "grounding") {
-        aiResponse = mlData.description || mlData.response || JSON.stringify(mlData);
+        aiResponse =
+          mlData.description || mlData.response || JSON.stringify(mlData);
         responseCoordinates = mlData.coordinates || [];
       } else if (categoryLower === "vqa") {
         aiResponse = mlData.answer || mlData.response || JSON.stringify(mlData);
       } else {
-        // Fallback for any other response format
         aiResponse = mlData.response || JSON.stringify(mlData);
         responseCoordinates = mlData.coordinates || [];
       }
@@ -208,6 +322,7 @@ export default function ChatDetailPage() {
           },
         }),
       });
+
       setSelectedCategory("");
 
       const data = await res.json();
@@ -226,39 +341,72 @@ export default function ChatDetailPage() {
         );
         return;
       }
-      
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
-      const responsesArray = data.chat.responses;
-      const savedResponse = responsesArray[responsesArray.length - 1].response;
-      const savedCoordinates =
-        responsesArray[responsesArray.length - 1].coordinates || [];
+  const processFinalPrompt = async (prompt, category, tempId) => {
+    try {
+      setIsAnalyzing(true);
+      const categoryLower = category.toLowerCase();
+      const categoryUpper = category.toUpperCase();
 
+      const mlRes = await fetch("/api/ml", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl, query: prompt, type: categoryUpper }),
+      });
+
+      const mlData = await mlRes.json();
+      if (!mlRes.ok) throw new Error(mlData.error || "Error from ML model");
+
+      let aiResponse = "";
+      let responseCoordinates = [];
+
+      if (categoryLower === "captioning") {
+        aiResponse = mlData.caption || mlData.response;
+      } else if (categoryLower === "grounding") {
+        aiResponse = mlData.description || mlData.response;
+        responseCoordinates = mlData.coordinates || [];
+      } else if (categoryLower === "vqa") {
+        aiResponse = mlData.answer || mlData.response;
+      } else {
+        aiResponse = mlData.response;
+        responseCoordinates = mlData.coordinates || [];
+      }
+
+      await fetch("/api/chats/update", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl,
+          routineId: null,
+          responses: [
+            {
+              type: categoryLower,
+              prompt: prompt, // <- backend receives combined prompt
+              response: aiResponse,
+              coordinates: responseCoordinates,
+            },
+          ],
+          metadata: {
+            uploadedAt: chat?.metadata?.uploadedAt || new Date(),
+            processingTime: 0,
+            imageSize: chat?.metadata?.imageSize || "1024x1024",
+          },
+        }),
+      });
       setChatHistory((prev) =>
         prev.map((c) =>
           c.id === tempId
-            ? {
-                ...c,
-                response: JSON.stringify(savedResponse, null, 2),
-                coordinates:
-                  categoryLower === "grounding" ? savedCoordinates || [] : [],
-              }
+            ? { ...c, response: aiResponse, coordinates: responseCoordinates }
             : c
         )
       );
-
-      if (
-        categoryLower === "grounding" &&
-        savedCoordinates &&
-        savedCoordinates.length > 0
-      ) {
-        setSelectedQueryId(tempId);
-        setCoordinates(savedCoordinates);
-        setSelectedCategory("Grounding");
-      }
-
-      setChat(data.chat);
-      setActiveChat(data.chat);
-      setReloadChats((prev) => !prev);
     } catch (err) {
       setChatHistory((prev) =>
         prev.map((c) =>
@@ -655,23 +803,28 @@ export default function ChatDetailPage() {
       setShowToast(true);
       return;
     }
-    const sortedPrompts = [...selectedPrompts].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const sortedPrompts = [...selectedPrompts].sort(
+      (a, b) => (a.order || 0) - (b.order || 0)
+    );
 
     setIsAnalyzing(true);
-    setToastMessage(`Running routine "${routine.title}" with ${sortedPrompts.length} prompts...`);
+    setToastMessage(
+      `Running routine "${routine.title}" with ${sortedPrompts.length} prompts...`
+    );
     setToastType("success");
     setShowToast(true);
     for (let i = 0; i < sortedPrompts.length; i++) {
       const prompt = sortedPrompts[i];
-      const category = prompt.type.charAt(0).toUpperCase() + prompt.type.slice(1); // Capitalize first letter
-      
+      const category =
+        prompt.type.charAt(0).toUpperCase() + prompt.type.slice(1); // Capitalize first letter
+
       try {
         // Use the existing sendMessage logic but wait for each to complete
         await sendMessage(prompt.prompt, category);
-        
+
         // Add a small delay between prompts to avoid overwhelming the API
         if (i < sortedPrompts.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       } catch (error) {
         console.error(`Error executing prompt ${i + 1}:`, error);
@@ -679,20 +832,19 @@ export default function ChatDetailPage() {
       }
     }
     setIsAnalyzing(false);
-  setToastMessage(`Routine "${routine.title}" completed!`);
-  setToastType("success");
-  setShowToast(true);
-  try {
-    await fetch("/api/routines/update-usage", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ routineId: routine._id }),
-    });
-  } catch (err) {
-    console.error("Failed to update routine usage:", err);
-  }
-
+    setToastMessage(`Routine "${routine.title}" completed!`);
+    setToastType("success");
+    setShowToast(true);
+    try {
+      await fetch("/api/routines/update-usage", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ routineId: routine._id }),
+      });
+    } catch (err) {
+      console.error("Failed to update routine usage:", err);
+    }
   };
 
   const handleSaveRoutineClick = () => {
@@ -745,7 +897,9 @@ export default function ChatDetailPage() {
           <div className="fixed right-0 top-0 h-full w-80 bg-[#0f1720] border-l border-cyan-800/20 p-4 overflow-y-auto z-50 shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500 ">Your Chats</h2>
+              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500 ">
+                Your Chats
+              </h2>
 
               <button
                 onClick={() => setIsChatListOpen(false)}
