@@ -10,7 +10,7 @@ export default function ImageCropperModal({
   onClose,
   imageSrc,
   onCropComplete,
-  loading, // NEW
+  loading,
 }) {
   const cropperRef = useRef(null);
   const [previewImage, setPreviewImage] = useState(null);
@@ -20,8 +20,6 @@ export default function ImageCropperModal({
     if (typeof cropperRef.current?.cropper !== "undefined") {
       const canvas = cropperRef.current.cropper.getCroppedCanvas();
       const croppedImage = canvas.toDataURL();
-
-      // Update preview
       setPreviewImage(croppedImage);
       setPreviewSize({
         width: canvas.width,
@@ -60,19 +58,14 @@ export default function ImageCropperModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         className="relative bg-[#0f1720] border border-cyan-700/20 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* LOADING OVERLAY */}
+        onClick={(e) => e.stopPropagation()}>
         {loading && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl z-50">
             <div className="border-4 border-t-transparent border-cyan-400 w-12 h-12 rounded-full animate-spin"></div>
           </div>
         )}
-
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">Crop Image</h2>
-
           {!loading && (
             <button
               onClick={onClose}
@@ -95,10 +88,7 @@ export default function ImageCropperModal({
             </button>
           )}
         </div>
-
-        {/* Main Content */}
         <div className="grid grid-cols-2 gap-6 mb-6">
-          {/* Left: Cropper */}
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-300 mb-3 pl-4 flex items-center gap-2">
               Crop & Adjust
@@ -122,8 +112,6 @@ export default function ImageCropperModal({
               </div>
             </div>
           </div>
-
-          {/* Right: Preview */}
           <div className="flex flex-col">
             <label className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
               <svg
@@ -140,14 +128,12 @@ export default function ImageCropperModal({
               </svg>
               Live Preview
             </label>
-
             {previewImage ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className=" rounded-lg px-4 flex-1 flex flex-col items-center justify-center"
               >
-                {/* Preview Image */}
                 <div className="w-full h-64 bg-black rounded-lg overflow-hidden flex items-center justify-center mb-4">
                   <img
                     src={previewImage}
@@ -155,8 +141,6 @@ export default function ImageCropperModal({
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
-
-                {/* Image Dimensions */}
                 <div className="w-full grid grid-cols-2 gap-2">
                   <div className="bg-slate-800 rounded p-3 text-center">
                     <div className="text-xs text-gray-400 mb-1">Width</div>
@@ -171,8 +155,6 @@ export default function ImageCropperModal({
                     </div>
                   </div>
                 </div>
-
-                {/* Aspect Ratio Info */}
                 <div className="w-full mt-3 bg-slate-800/50 rounded p-2 text-center border border-slate-700">
                   <div className="text-xs text-gray-400">Aspect Ratio</div>
                   <div className="text-sm font-semibold text-gray-200">
@@ -211,8 +193,6 @@ export default function ImageCropperModal({
             )}
           </div>
         </div>
-
-        {/* Footer with Actions */}
         <div className="border-t-2 border-cyan-900/30 pt-4">
           <div className="flex justify-end gap-3">
             <button
@@ -222,7 +202,6 @@ export default function ImageCropperModal({
             >
               Cancel
             </button>
-
             <button
               disabled={loading || !previewImage}
               onClick={handleCrop}

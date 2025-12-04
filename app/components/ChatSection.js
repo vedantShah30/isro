@@ -4,11 +4,6 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * ChatSection Component
- * 
- * A chat interface component with tabs for filtering by category (All, Captioning, Grounding, VQA).
- * Displays user queries (right side, blue bubbles) and AI responses (left side, dark boxes).
- * 
  * @param {Object} props - Component props
  * @param {Array} props.chatHistory - Array of chat objects: [{ id?: number, query: string, response: string, category: 'Captioning'|'Grounding'|'VQA', timestamp?: Date, coordinates?: Array }]
  * @param {Function} props.onQueryClick - Callback function when a query is clicked: (chat: Object) => void
@@ -23,7 +18,6 @@ export default function ChatSection({
   const chatEndRef = useRef(null);
   const [localSelectedId, setLocalSelectedId] = useState(selectedQueryId);
 
-  // keep localSelectedId in sync with prop
   useEffect(() => {
     setLocalSelectedId(selectedQueryId);
   }, [selectedQueryId]);
@@ -66,7 +60,6 @@ export default function ChatSection({
 
   return (
     <div className="w-full h-[65vh] flex flex-col bg-[#0f1720] border border-cyan-700/10 rounded-2xl overflow-hidden min-h-[420px] shadow-lg">
-      {/* Tabs Section */}
       <div className="flex items-center justify-center py-1 border-b border-cyan-700/10">
         <div className="flex space-x-4 text-sm">
           {tabs.map((tab) => (
@@ -91,12 +84,9 @@ export default function ChatSection({
           ))}
         </div>
       </div>
-
-      {/* Chat Messages Area */}
       <div
         className="flex-1 overflow-y-auto p-6 space-y-8 chat-messages-area"
         onClick={() => {
-          // clicking the messages area (outside a query button) clears selection
           setLocalSelectedId(null);
           if (onQueryClick && typeof onQueryClick === 'function') onQueryClick(null);
         }}
@@ -108,13 +98,10 @@ export default function ChatSection({
         ) : (
           filteredChatHistory.map((chat) => (
             <div key={chat.id} className="space-y-3">
-              {/* User Query - Right Side */}
               <div className="flex flex-col items-end">
-                {/* Category Label */}
                 <span className="text-xs text-blue-400 mb-0.5 px-2 font-medium">
                   {chat.category}
                 </span>
-                {/* Query Bubble */}
                 <button
                   className={`bg-blue-600 text-white px-2 py-3 rounded-lg max-w-[75%] shadow-md transition-all cursor-pointer focus:outline-none ${
                     localSelectedId === chat.id
@@ -130,8 +117,6 @@ export default function ChatSection({
                   <p className="leading-relaxed text-left whitespace-pre-wrap break-words max-w-full">{chat.query}</p>
                 </button>
               </div>
-
-              {/* AI Response - Left Side */}
               {chat.response ? (
                 <div className="flex flex-col items-start">
                   <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">

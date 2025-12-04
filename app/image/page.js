@@ -47,9 +47,8 @@ export default function ImagePage() {
       return;
     }
 
-    try {
+    try { 
       setIsAnalyzing(true);
-
       // Create a new chat with the image
       const res = await fetch("/api/chats/create", {
         method: "POST",
