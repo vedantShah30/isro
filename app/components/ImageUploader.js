@@ -4,21 +4,16 @@ import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import ImageCropperModal from "./ImageCropperModal";
   const getVerticesFromBox = (box) => {
-    // Handle both array format and object format with C0, C1, C2, C3
     let vertices = [];
-    
     if (Array.isArray(box)) {
       vertices = box;
     } else if (box && typeof box === 'object') {
-      // If it's an object with C0, C1, C2, C3 keys
       if (box.C0 && box.C1 && box.C2 && box.C3) {
         vertices = [box.C0, box.C1, box.C2, box.C3];
       } else {
-        // Try to extract any coordinate-like values
         vertices = Object.values(box).filter(v => v && typeof v === 'object' && 'x' in v && 'y' in v);
       }
     }
-    
     return vertices.filter(v => v && typeof v === 'object' && typeof v.x === 'number' && typeof v.y === 'number');
   };
 
@@ -32,32 +27,26 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
   const [tempImageForCrop, setTempImageForCrop] = useState(null);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [cropUploading, setCropUploading] = useState(false); // NEW
-
   const fileInputRef = useRef(null);
+  const hasOverlay = coordinates && coordinates.length > 0 && setBoundingBox;
+  const overlayImageSrc = hasOverlay && originalImageUrl ? originalImageUrl : preview;
 
   useEffect(() => {
     if (externalImage) {
       setPreview(externalImage);
     }
   }, [externalImage]);
-
-  const hasOverlay = coordinates && coordinates.length > 0 && setBoundingBox;
-  const overlayImageSrc = hasOverlay && originalImageUrl ? originalImageUrl : preview;
-
   useEffect(() => {
     if (!overlayImageSrc) return;
-
     const img = new Image();
     img.onload = () => {
       setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
     };
     img.src = overlayImageSrc;
   }, [overlayImageSrc]);
-
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
-
     setUploading(true);
     const res = await fetch("/api/upload", {
       method: "POST",
@@ -65,24 +54,19 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
     });
     const data = await res.json();
     setUploading(false);
-
     if (!data.success) {
       console.error("Cloudinary upload failed:", data.error);
       return null;
     }
     return data.url;
   };
-
   const processFile = async (file) => {
     if (!file) return;
-
     if (file.type !== "image/png" && file.type !== "image/jpeg") return;
     setSelectedImage(file);
-
     const reader = new FileReader();
     reader.onloadend = async () => {
       setPreview(reader.result);
-
       const cloudUrl = await uploadToCloudinary(file);
       if (cloudUrl) {
         onImageSelect?.(file, cloudUrl);
@@ -90,53 +74,38 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
     };
     reader.readAsDataURL(file);
   };
-
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
     processFile(e.dataTransfer.files[0]);
   };
-
   const handleCropClick = () => {
-    // Always use the original imageUrl for cropping, not the cropped preview
     const imageToCrop = originalImageUrl || externalImage || preview;
     setTempImageForCrop(imageToCrop);
     setShowCropperModal(true);
   };
-
   const handleCropComplete = async (croppedImage) => {
     setCropUploading(true);
-
     const blob = await fetch(croppedImage).then((res) => res.blob());
     const croppedFile = new File(
       [blob],
       selectedImage?.name || "cropped-image.jpg",
       { type: blob.type }
     );
-
-    const formData = new FormData();
+  const formData = new FormData();
     formData.append("file", croppedFile);
-
-    const res = await fetch("/api/upload", {
+  const res = await fetch("/api/upload", {
       method: "POST",
       body: formData,
-    });
-
-    const data = await res.json();
+  });
+  const data = await res.json();
     setCropUploading(false);
-
     if (!data.success) {
       console.error("Cloudinary upload failed:", data.error);
       return;
     }
-    // console.log("Cropped image uploaded to: ", data.url);
-  
-    // Save cropped URL to chat that has the same imageUrl
-    // Use originalImageUrl prop or externalImage (original Cloudinary URL) to find the matching chat
-    // Only use if it's a valid URL (not a data URL)
-    const isDataUrl = (url) => url && url.startsWith('data:');
-    const imageUrlForUpdate = originalImageUrl || (externalImage && !isDataUrl(externalImage) ? externalImage : null);
-    
+  const isDataUrl = (url) => url && url.startsWith('data:');
+  const imageUrlForUpdate = originalImageUrl || (externalImage && !isDataUrl(externalImage) ? externalImage : null);
     if (imageUrlForUpdate && data.url) {
       try {
         const updateRes = await fetch("/api/chats/update-cropped-url", {
@@ -148,13 +117,10 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
             croppedUrl: data.url,
           }),
         });
-
         const updateData = await updateRes.json();
         if (!updateRes.ok || !updateData.success) {
           console.error("Failed to update cropped URL:", updateData.error);
         } else {
-          // console.log("Cropped URL saved to chat with imageUrl:", originalImageUrl);
-          // Notify parent that crop is complete so it can refresh chat data
           if (onCropComplete) {
             onCropComplete();
           }
@@ -165,22 +131,12 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
     } else if (!originalImageUrl) {
       console.warn("Cannot save cropped URL: No valid imageUrl found. Make sure you're cropping an image from an existing chat.");
     }
-
-    // update preview
-    //setPreview(croppedImage);
-
-    // notify parent - change this to see the preview of the image
-    //onImageSelect?.(croppedFile, data.url);
     setShowCropperModal(false);
     setTempImageForCrop(null);
   };
   const renderBoundingBoxes = () => {
-    // was: if (!coordinates || coordinates.length === 0 || !preview) return null;
     if (!coordinates || coordinates.length === 0 || !overlayImageSrc) return null;
-    
-    // If we don't have image dimensions yet, return null
     if (imageDimensions.width === 0 || imageDimensions.height === 0) return null;
-
     return (
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
@@ -190,17 +146,13 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
       >
         {coordinates.map((box, index) => {
           const vertices = getVerticesFromBox(box);
-          
           if (vertices.length < 4) return null;
-
-          // Convert coordinates - if values are <= 1, assume normalized (0-1), else assume pixels
           const isNormalized = vertices.some(v => v.x <= 1 && v.y <= 1);
           const points = vertices.map(v => {
             const x = isNormalized ? v.x * imageDimensions.width : v.x;
             const y = isNormalized ? v.y * imageDimensions.height : v.y;
             return `${x},${y}`;
           }).join(' ');
-
           return (
             <polygon
               key={index}
@@ -260,7 +212,6 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
             <div>
               <div className="relative h-[350px] rounded-lg overflow-hidden">
                 <img
-                  // was: src={preview}
                   src={overlayImageSrc || preview}
                   alt="Preview"
                   className="w-full h-full object-cover cursor-pointer"
@@ -269,10 +220,8 @@ export default function ImageUploader({ onImageSelect, externalImage,showChangeI
                     setShowModal(true);
                   }}
                 />
-                {/* Render bounding boxes overlay */}
                 {coordinates && coordinates.length > 0 && setBoundingBox && renderBoundingBoxes()}
               </div>
-
               <div className="flex gap-2 mt-2 justify-center">
               {!uploading  && (
                   <button

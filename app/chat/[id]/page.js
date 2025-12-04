@@ -310,7 +310,7 @@ export default function ChatDetailPage() {
           metadata: {
             uploadedAt: chat?.metadata?.uploadedAt || new Date(),
             processingTime: 0,
-            imageSize: chat?.metadata?.imageSize || "1024x1024",
+            imageSize: chat?.metadata?.imageSize || "2000x2000",
           },
         }),
       });
@@ -470,7 +470,7 @@ export default function ChatDetailPage() {
   }, [session, reloadRoutines]);
 
   if (status === "loading" || loading) {
-    return <Loader />;
+    return <Loader/>;
   }
 
   if (!session) {
