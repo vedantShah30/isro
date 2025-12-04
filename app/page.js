@@ -54,19 +54,6 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              {/* <svg
-                className="w-10 h-10 text-cyan-400"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                <path
-                  d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-                  strokeWidth="2"
-                />
-                <path d="M2 12h20" strokeWidth="2" />
-              </svg> */}
               <img src="/isro.svg" className='w-14' />
               <div>
                 <h1 className="text-xl font-bold text-white pl-3">SAC - ISRO</h1>
