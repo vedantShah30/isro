@@ -25,7 +25,7 @@ const UserSchema = new mongoose.Schema(
     },
     isTooltip: {
       type: Boolean,
-      default: true, // Show tooltips for new users
+      default: true, 
     },
     totalImages: {
       type:Number,
@@ -34,11 +34,8 @@ const UserSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt
+    timestamps: true, 
   }
 );
-// Index for faster queries
-// UserSchema.index({ email: 1 });
-// UserSchema.index({ googleProviderId: 1 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

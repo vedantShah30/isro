@@ -1,13 +1,10 @@
 'use client';
-
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere, Stars, Ring } from '@react-three/drei';
 import { useRef } from 'react';
-
 // Sun
 function Sun() {
-  const meshRef = useRef();
-  
+  const meshRef = useRef(); 
   useFrame((state) => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.002;

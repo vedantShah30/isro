@@ -13,7 +13,7 @@ const PromptItemSchema = new mongoose.Schema({
   },
   order: {
     type: Number,
-    required: true, // To maintain the sequence of prompts
+    required: true, 
   },
 });
 
@@ -34,14 +34,14 @@ const RoutineSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
-    prompts: [PromptItemSchema], // Array of prompts with their types and order
+    prompts: [PromptItemSchema], 
     isActive: {
       type: Boolean,
-      default: true, // User can archive/deactivate routines
+      default: true,
     },
     usageCount: {
       type: Number,
-      default: 0, // Track how many times this routine has been used
+      default: 0, 
     },
     lastUsedAt: {
       type: Date,
@@ -52,12 +52,8 @@ const RoutineSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// Indexes for faster queries
 RoutineSchema.index({ user: 1, isActive: 1 });
 RoutineSchema.index({ user: 1, lastUsedAt: -1 });
-
-// Method to increment usage count
 RoutineSchema.methods.recordUsage = function() {
   this.usageCount += 1;
   this.lastUsedAt = new Date();

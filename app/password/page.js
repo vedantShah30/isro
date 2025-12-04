@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -8,12 +7,10 @@ export default function PasswordPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
     try {
       const response = await fetch("/api/verify-password", {
         method: "POST",
@@ -22,9 +19,7 @@ export default function PasswordPage() {
         },
         body: JSON.stringify({ password }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         // Set cookie and redirect
         document.cookie = "password_verified=true; path=/; max-age=2592000"; // 30 days
@@ -71,7 +66,6 @@ export default function PasswordPage() {
         >
           Enter Password
         </h1>
-
         <input
           type="password"
           value={password}
@@ -89,7 +83,6 @@ export default function PasswordPage() {
             marginBottom: "15px",
           }}
         />
-
         {error && (
           <div
             style={{
@@ -102,7 +95,6 @@ export default function PasswordPage() {
             {error}
           </div>
         )}
-
         <button
           type="submit"
           disabled={isLoading}
