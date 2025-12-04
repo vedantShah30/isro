@@ -184,27 +184,25 @@ export default function ChatDetailPage() {
 
     const msg = message.trim();
     const tempId = Date.now();
-
-    const finalCategory = category || "Captioning";
+    let finalCategory = category || "Captioning";
     if (!isGsdPending) {
       const containsGsd = gsd_keywords.some((word) =>
         msg.toLowerCase().includes(word.toLowerCase())
       );
-
       if (containsGsd) {
         setPendingGsdPrompt(msg);
         setIsGsdPending(true);
+        finalCategory = "area";
+        setSelectedCategory("area");
         const tempChat = {
           id: tempId,
           query: msg,
-          response:
-            "You mentioned GSD. Please provide a scale value (for example: 0.5, 1.0, 2.0).",
+          response: "Please give us the GSD in meter per pixel.",
           timestamp: new Date(),
           category: finalCategory,
           error: false,
           coordinates: [],
         };
-
         setChatHistory((prev) => [...prev, tempChat]);
         setInputMessage("");
         return;
@@ -233,23 +231,17 @@ export default function ChatDetailPage() {
       // Reset state
       setIsGsdPending(false);
       setPendingGsdPrompt("");
-
-      // -------------- NEW FIXED BEHAVIOR --------------
-      // Show ONLY user’s scale message (msg)
       const tempChat = {
         id: tempId,
-        query: msg, // ONLY "0.5"
+        query: msg,
         response: "Processing...",
         timestamp: new Date(),
         category: finalCategory,
         error: false,
         coordinates: [],
       };
-
       setChatHistory((prev) => [...prev, tempChat]);
       setInputMessage("");
-
-      // Call backend manually with combinedPrompt
       await processFinalPrompt(combinedPrompt, finalCategory, tempId);
       return;
     }
