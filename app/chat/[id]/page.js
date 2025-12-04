@@ -157,50 +157,33 @@ export default function ChatDetailPage() {
     try {
       setIsAnalyzing(true);
 
-      if (!finalCategory || finalCategory === "") {
-        const classifyRes = await fetch("/api/models/classify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: msg }),
-        });
-
-        const classifyData = await classifyRes.json();
-        finalCategory = classifyData.type || "Captioning";
-        setChatHistory((prev) =>
-          prev.map((c) =>
-            c.id === tempId ? { ...c, category: finalCategory } : c
-          )
-        );
-      }
-
       let aiResponse = "";
       let responseCoordinates = [];
       const categoryLower = finalCategory.toLowerCase();
+      
+      const mlRes = await fetch("/api/ml", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl, query: msg}),
+      });
+      
+      const mlData = await mlRes.json();
+      
+      if (!mlRes.ok) {
+        throw new Error(mlData.error || "Error from ML model");
+      }
+
       if (categoryLower === "captioning") {
-        const captionRes = await fetch("/api/models/caption", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageUrl, prompt: msg }),
-        });
-        const captionData = await captionRes.json();
-        aiResponse = captionData.caption || "No response from caption model";
+        aiResponse = mlData.caption || mlData.response || JSON.stringify(mlData);
       } else if (categoryLower === "grounding") {
-        const groundingRes = await fetch("/api/models/ground", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageUrl, prompt: msg }),
-        });
-        const groundingData = await groundingRes.json();
-        aiResponse = groundingData.description || JSON.stringify(groundingData);
-        responseCoordinates = groundingData.coordinates || [];
+        aiResponse = mlData.description || mlData.response || JSON.stringify(mlData);
+        responseCoordinates = mlData.coordinates || [];
       } else if (categoryLower === "vqa") {
-        const vqaRes = await fetch("/api/models/vqa", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageUrl, prompt: msg }),
-        });
-        const vqaData = await vqaRes.json();
-        aiResponse = vqaData.answer || "No response from VQA model";
+        aiResponse = mlData.answer || mlData.response || JSON.stringify(mlData);
+      } else {
+        // Fallback for any other response format
+        aiResponse = mlData.response || JSON.stringify(mlData);
+        responseCoordinates = mlData.coordinates || [];
       }
 
       const res = await fetch("/api/chats/update", {
