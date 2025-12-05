@@ -228,6 +228,7 @@ export default function ChatDetailPage() {
       setChatHistory((prev) => [...prev, tempChat]);
       setThinkingQueryId(tempId); 
       setInputMessage("");
+      setSelectedCategory(finalCategory);
       await processFinalPrompt(combinedPrompt, finalCategory, tempId);
       return;
     }
@@ -242,6 +243,7 @@ export default function ChatDetailPage() {
       isThinking: true,
     };
     setChatHistory((prev) => [...prev, tempChat]);
+    setThinkingQueryId(tempId); 
     setInputMessage("");
     try {
       setIsAnalyzing(true);
@@ -254,6 +256,9 @@ export default function ChatDetailPage() {
       });
       const mlData = await mlRes.json();
       if (!mlRes.ok) throw new Error(mlData.error || "Error from ML model");
+      if (!mlData) {
+        throw new Error("No response received from ML model");
+      }
       let aiResponse = "";
       let responseCoordinates = [];
       if (categoryLower === "captioning") {
@@ -355,6 +360,12 @@ export default function ChatDetailPage() {
       });
       const mlData = await mlRes.json();
       if (!mlRes.ok) throw new Error(mlData.error || "Error from ML model");
+      if (!mlData) {
+        throw new Error("No response received from ML model");
+      }
+      if (!mlData) {
+        throw new Error("No response received from ML model");
+      }
       let aiResponse = "";
       let responseCoordinates = [];
       if (categoryLower === "captioning") {

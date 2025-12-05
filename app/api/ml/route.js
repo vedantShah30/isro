@@ -8,7 +8,6 @@ export async function POST(request) {
     }
 
     const payload = await request.json();
-    console.log(payload);
     const url = `${ML_MODEL_URL}/infer`;
     const resp = await fetch(url, {
       method: "POST",

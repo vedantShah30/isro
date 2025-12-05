@@ -31,7 +31,6 @@ const Promptbox = ({
     const trimmed = (currentValue || "").trim();
     if (!trimmed) return;
     if (typeof onSend === "function") onSend(trimmed, currentCategory);
-    else console.log("Send (no handler):", trimmed, currentCategory);
     if (!isControlled) setInternalValue("");
   };
   useEffect(() => {

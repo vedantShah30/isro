@@ -27,7 +27,7 @@ export default function ChatSection({
   // Scroll to bottom when new messages are added
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatHistory]);
+  }, [chatHistory,thinkingQueryId]);
 
   // Hide scrollbar styles
   useEffect(() => {
@@ -98,7 +98,7 @@ export default function ChatSection({
           </div>
         ) : (
           filteredChatHistory.map((chat) => {
-            const isThinking = chat.isThinking && thinkingQueryId === chat.id;
+            const isThinking = Boolean(chat.isThinking) && thinkingQueryId != null && thinkingQueryId == chat.id;
             
             return (
               <div key={chat.id} className="space-y-3">
