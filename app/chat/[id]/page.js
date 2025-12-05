@@ -271,6 +271,7 @@ export default function ChatDetailPage() {
       });
 
       const mlData = await mlRes.json();
+      console.log(mlData);
 
       if (!mlRes.ok) throw new Error(mlData.error || "Error from ML model");
 
