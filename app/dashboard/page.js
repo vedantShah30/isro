@@ -82,21 +82,9 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-3">
-              <svg
-                className="w-10 h-10 text-[#1F6FEB]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                <path
-                  d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-                  strokeWidth="2"
-                />
-                <path d="M2 12h20" strokeWidth="2" />
-              </svg>
+              <img src="./isro.svg" className="w-14" />
               <div>
-                <h1 className="text-xl font-bold">SAC - ISRO</h1>
+                <h1 className="text-xl font-bold pl-3">SAC - ISRO</h1>
                 <p className="text-xs text-[#98C1D9]">
                   Satellite Imagery Analysis
                 </p>
@@ -160,9 +148,7 @@ export default function Dashboard() {
             className="bg-[#122031] border border-[#2C384A] rounded-xl p-6"
           >
             <p className="text-sm text-[#98C1D9]">Images Analyzed</p>
-            <p className="text-3xl font-bold text-[#FFFFFF]">
-              {chats.length}
-            </p>
+            <p className="text-3xl font-bold text-[#FFFFFF]">{chats.length}</p>
           </motion.div>
         </div>
 
