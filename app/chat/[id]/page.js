@@ -47,7 +47,7 @@ export default function ChatDetailPage() {
   const [selectedQueryId, setSelectedQueryId] = useState(null);
   const [isGsdPending, setIsGsdPending] = useState(false);
   const [pendingGsdPrompt, setPendingGsdPrompt] = useState("");
-
+  const [thinkingQueryId, setThinkingQueryId] = useState(null);
   const gsd_keywords = [
     "area",
     "dimensions",
@@ -92,40 +92,30 @@ export default function ChatDetailPage() {
 
   const fetchChatData = useCallback(async () => {
     if (!chatId) return;
-
     try {
       setLoading(true);
       setError(null);
-
       const res = await fetch(`/api/chats/${chatId}/get`, {
         method: "GET",
         credentials: "include",
       });
-
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         setError(data.error || "Failed to fetch chat");
         return;
       }
-
       const chatData = data.chats;
-
       if (!chatData) {
         setError("Chat not found");
         return;
       }
-
       setChat(chatData);
       setActiveChat(chatData);
       setImageUrl(chatData.imageUrl);
-
-      // Extract coordinates from grounding responses
       const coordinatesData = [];
       if (chatData.responses && Array.isArray(chatData.responses)) {
         chatData.responses.forEach((r) => {
           if (r.type?.toLowerCase() === "grounding" && r.coordinates) {
-            // r.coordinates is an array, so we need to handle each coordinate box
             if (Array.isArray(r.coordinates)) {
               coordinatesData.push(...r.coordinates);
             } else {
@@ -134,19 +124,14 @@ export default function ChatDetailPage() {
           }
         });
       }
-
-      // Don't set initial coordinates - only show when a query is clicked
       setCoordinates([]);
-      // Format chat history from responses
       if (chatData.responses && chatData.responses.length > 0) {
         const typeMap = {
           captioning: "Captioning",
           grounding: "Grounding",
           vqa: "VQA",
         };
-
         const formattedMessages = chatData.responses.map((r) => {
-          // Extract coordinates for this specific response
           let responseCoordinates = [];
           if (r.type?.toLowerCase() === "grounding" && r.coordinates) {
             if (Array.isArray(r.coordinates)) {
@@ -165,7 +150,8 @@ export default function ChatDetailPage() {
                 : JSON.stringify(r.response, null, 2),
             category: typeMap[r.type?.toLowerCase()] || "Captioning",
             timestamp: r.timestamp || new Date(),
-            coordinates: responseCoordinates, // Store coordinates with each message
+            coordinates: responseCoordinates,
+            isThinking: false,  
           };
         });
 
@@ -202,6 +188,7 @@ export default function ChatDetailPage() {
           category: finalCategory,
           error: false,
           coordinates: [],
+          isThinking: false,
         };
         setChatHistory((prev) => [...prev, tempChat]);
         setInputMessage("");
@@ -210,7 +197,6 @@ export default function ChatDetailPage() {
     }
     if (isGsdPending) {
       const scaleValue = parseFloat(msg);
-
       if (isNaN(scaleValue)) {
         const tempChat = {
           id: tempId,
@@ -220,63 +206,56 @@ export default function ChatDetailPage() {
           category: finalCategory,
           error: true,
           coordinates: [],
+          isThinking: false,
         };
         setChatHistory((prev) => [...prev, tempChat]);
         setInputMessage("");
         return;
       }
-
       const combinedPrompt = `${pendingGsdPrompt} | SCALE: ${scaleValue}`;
-
-      // Reset state
       setIsGsdPending(false);
       setPendingGsdPrompt("");
       const tempChat = {
         id: tempId,
         query: msg,
-        response: "Processing...",
+        response: "",
         timestamp: new Date(),
         category: finalCategory,
         error: false,
         coordinates: [],
+        isThinking: true,
       };
       setChatHistory((prev) => [...prev, tempChat]);
+      setThinkingQueryId(tempId); 
       setInputMessage("");
       await processFinalPrompt(combinedPrompt, finalCategory, tempId);
       return;
     }
-
     const tempChat = {
       id: tempId,
       query: msg,
-      response: "Processing...",
+      response: "",
       timestamp: new Date(),
       category: finalCategory,
       error: false,
       coordinates: [],
+      isThinking: true,
     };
     setChatHistory((prev) => [...prev, tempChat]);
     setInputMessage("");
-
     try {
       setIsAnalyzing(true);
-
       const categoryLower = finalCategory.toLowerCase();
       const categoryUpper = finalCategory.toUpperCase();
-
       const mlRes = await fetch("/api/ml", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl, query: msg, type: categoryUpper }),
       });
-
       const mlData = await mlRes.json();
-
       if (!mlRes.ok) throw new Error(mlData.error || "Error from ML model");
-
       let aiResponse = "";
       let responseCoordinates = [];
-
       if (categoryLower === "captioning") {
         aiResponse =
           mlData.caption || mlData.response || JSON.stringify(mlData);
@@ -290,7 +269,6 @@ export default function ChatDetailPage() {
         aiResponse = mlData.response || JSON.stringify(mlData);
         responseCoordinates = mlData.coordinates || [];
       }
-
       const res = await fetch("/api/chats/update", {
         method: "POST",
         credentials: "include",
@@ -314,11 +292,8 @@ export default function ChatDetailPage() {
           },
         }),
       });
-
       setSelectedCategory("");
-
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         setChatHistory((prev) =>
           prev.map((c) =>
@@ -327,19 +302,46 @@ export default function ChatDetailPage() {
                   ...c,
                   response: data.error || "Error saving chat",
                   error: true,
+                  isThinking: false,
                 }
               : c
           )
         );
+        setThinkingQueryId(null);
         return;
       }
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempId
+            ? {
+                ...c,
+                response: aiResponse,
+                coordinates: responseCoordinates,
+                isThinking: false, 
+              }
+            : c
+        )
+      );
+      setThinkingQueryId(null); 
     } catch (error) {
       console.error(error);
+      setChatHistory((prev) =>
+        prev.map((c) =>
+          c.id === tempId
+            ? {
+                ...c,
+                response: error.message || "An error occurred",
+                error: true,
+                isThinking: false,
+              }
+            : c
+        )
+      );
+      setThinkingQueryId(null);
     } finally {
       setIsAnalyzing(false);
     }
   };
-
   const processFinalPrompt = async (prompt, category, tempId) => {
     try {
       setIsAnalyzing(true);
@@ -351,13 +353,10 @@ export default function ChatDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl, query: prompt, type: categoryUpper }),
       });
-
       const mlData = await mlRes.json();
       if (!mlRes.ok) throw new Error(mlData.error || "Error from ML model");
-
       let aiResponse = "";
       let responseCoordinates = [];
-
       if (categoryLower === "captioning") {
         aiResponse = mlData.caption || mlData.response;
       } else if (categoryLower === "grounding") {
@@ -369,7 +368,6 @@ export default function ChatDetailPage() {
         aiResponse = mlData.response;
         responseCoordinates = mlData.coordinates || [];
       }
-
       await fetch("/api/chats/update", {
         method: "POST",
         credentials: "include",
@@ -380,7 +378,7 @@ export default function ChatDetailPage() {
           responses: [
             {
               type: categoryLower,
-              prompt: prompt, // <- backend receives combined prompt
+              prompt: prompt, 
               response: aiResponse,
               coordinates: responseCoordinates,
             },
@@ -388,52 +386,54 @@ export default function ChatDetailPage() {
           metadata: {
             uploadedAt: chat?.metadata?.uploadedAt || new Date(),
             processingTime: 0,
-            imageSize: chat?.metadata?.imageSize || "1024x1024",
+            imageSize: chat?.metadata?.imageSize || "2000x2000",
           },
         }),
       });
       setChatHistory((prev) =>
         prev.map((c) =>
           c.id === tempId
-            ? { ...c, response: aiResponse, coordinates: responseCoordinates }
+            ? { ...c, response: aiResponse, coordinates: responseCoordinates,isThinking: false, }
             : c
         )
       );
+      setThinkingQueryId(null);
     } catch (err) {
       setChatHistory((prev) =>
         prev.map((c) =>
-          c.id === tempId ? { ...c, response: err.message, error: true } : c
+          c.id === tempId 
+            ? { 
+                ...c, 
+                response: err.message, 
+                error: true,
+                isThinking: false, 
+              } 
+            : c
         )
       );
+      setThinkingQueryId(null);
     } finally {
       setIsAnalyzing(false);
     }
   };
-
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
       return;
     }
-
     if (status === "loading" || !chatId) {
       return;
     }
-
     fetchChatData();
   }, [status, chatId, router, fetchChatData]);
-
-  // Preload user chats for sidebar
   useEffect(() => {
     if (!session) return;
-
     const preloadChats = async () => {
       try {
         const res = await fetch("/api/chats/get", {
           method: "GET",
           credentials: "include",
         });
-
         const data = await res.json();
         if (data.success) {
           setUserChats(data.chats);
@@ -442,14 +442,10 @@ export default function ChatDetailPage() {
         console.error("Failed to preload chats:", err);
       }
     };
-
     preloadChats();
   }, [session, reloadChats]);
-
-  // Load routines
   useEffect(() => {
     if (!session) return;
-
     const loadRoutines = async () => {
       try {
         const res = await fetch("/api/routines/get", {
@@ -465,14 +461,11 @@ export default function ChatDetailPage() {
         console.error("Failed to load routines:", err);
       }
     };
-
     loadRoutines();
   }, [session, reloadRoutines]);
-
   if (status === "loading" || loading) {
     return <Loader/>;
   }
-
   if (!session) {
     return null;
   }
@@ -494,28 +487,21 @@ export default function ChatDetailPage() {
   }
 
   const handleImageSelect = (file, cloudUrl) => {
-    // Handle image selection if needed
     setImageUrl(cloudUrl);
   };
-
   const handleQueryClick = (chatItem) => {
     setSelectedQueryId(chatItem.id);
-
-    // If it's a grounding query, show its coordinates
     if (
       chatItem.category === "Grounding" &&
       chatItem.coordinates &&
       chatItem.coordinates.length > 0
     ) {
       setCoordinates(chatItem.coordinates);
-      console.log(chatItem.coordinates);
       setSelectedCategory("Grounding");
     } else {
-      // Clear coordinates for non-grounding queries
       setCoordinates([]);
     }
   };
-
   const handleGenerateSummaryPdf = async () => {
     if (!imageUrl || chatHistory.length === 0) {
       setToastMessage("No image or chat history to summarize");
@@ -523,10 +509,8 @@ export default function ChatDetailPage() {
       setShowToast(true);
       return;
     }
-
     try {
       const { jsPDF } = await import("jspdf");
-
       const loadImageElement = (src) =>
         new Promise((resolve, reject) => {
           const img = new Image();
@@ -730,7 +714,6 @@ export default function ChatDetailPage() {
   };
 
   const openChat = (selectedChat) => {
-    // Navigate to the selected chat's page
     router.push(`/chat/${selectedChat._id}`);
   };
 
@@ -781,8 +764,6 @@ export default function ChatDetailPage() {
   };
 
   const handleSelectRoutine = async (selectedPrompts, routine) => {
-    console.log("Routine selected:", routine);
-    console.log("Selected prompts:", selectedPrompts);
     if (!imageUrl) {
       setToastMessage("Please ensure an image is loaded");
       setToastType("error");
@@ -808,19 +789,16 @@ export default function ChatDetailPage() {
     for (let i = 0; i < sortedPrompts.length; i++) {
       const prompt = sortedPrompts[i];
       const category =
-        prompt.type.charAt(0).toUpperCase() + prompt.type.slice(1); // Capitalize first letter
+        prompt.type.charAt(0).toUpperCase() + prompt.type.slice(1); 
 
       try {
-        // Use the existing sendMessage logic but wait for each to complete
         await sendMessage(prompt.prompt, category);
 
-        // Add a small delay between prompts to avoid overwhelming the API
         if (i < sortedPrompts.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
       } catch (error) {
         console.error(`Error executing prompt ${i + 1}:`, error);
-        // Continue with next prompt even if one fails
       }
     }
     setIsAnalyzing(false);
@@ -858,10 +836,8 @@ export default function ChatDetailPage() {
         onGeneratePdf={handleGenerateSummaryPdf}
       />
 
-      {/* Main content area */}
       <main className="relative z-20 ml-20">
         <div className="max-w-7xl mx-auto px-6 pt-9 flex gap-8">
-          {/* Left - Image box */}
           <div className="w-[800px] flex items-center justify-center">
             <UploadCard
               onImageSelect={handleImageSelect}
@@ -878,16 +854,15 @@ export default function ChatDetailPage() {
             />
           </div>
 
-          {/* Right - Chat Section */}
           <ChatSection
             chatHistory={chatHistory}
             onQueryClick={handleQueryClick}
             selectedQueryId={selectedQueryId}
+            thinkingQueryId={thinkingQueryId}
           />
         </div>
         {isChatListOpen && (
           <div className="fixed right-0 top-0 h-full w-80 bg-[#0f1720] border-l border-cyan-800/20 p-4 overflow-y-auto z-50 shadow-xl">
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500 ">
                 Your Chats
@@ -897,7 +872,6 @@ export default function ChatDetailPage() {
                 onClick={() => setIsChatListOpen(false)}
                 className="text-gray-300 hover:text-white transition"
               >
-                {/* Close Icon */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="22"
@@ -915,7 +889,6 @@ export default function ChatDetailPage() {
               </button>
             </div>
 
-            {/* Chat list */}
             {userChats.map((chat) => (
               <ChatListItem
                 key={chat._id}
@@ -946,7 +919,6 @@ export default function ChatDetailPage() {
                       activeChat?._id === chatIdToDelete ||
                       chatId === chatIdToDelete
                     ) {
-                      // If deleting current chat, redirect to chat page
                       router.push("/image");
                     }
                   }
@@ -957,7 +929,6 @@ export default function ChatDetailPage() {
         )}
       </main>
 
-      {/* Bottom - Searchbox/Promptbox */}
       <div className="relative z-10 text-center">
         <Promptbox
           value={inputMessage}
@@ -968,7 +939,6 @@ export default function ChatDetailPage() {
         />
       </div>
 
-      {/* Routines Modal */}
       <RoutinesModal
         open={isRoutinesOpen}
         onClose={() => setIsRoutinesOpen(false)}
@@ -976,7 +946,6 @@ export default function ChatDetailPage() {
         onSelectRoutine={handleSelectRoutine}
       />
 
-      {/* Save Routine Modal */}
       <SaveRoutineModal
         open={isSaveRoutineModalOpen}
         onClose={() => setIsSaveRoutineModalOpen(false)}
@@ -984,7 +953,6 @@ export default function ChatDetailPage() {
         promptCount={chatHistory.length}
       />
 
-      {/* Toast Notification */}
       <Toast
         message={toastMessage}
         type={toastType}

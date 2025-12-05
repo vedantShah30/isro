@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import ThinkingEffect from './ThinkingEffect';
 
 /**
  * @param {Object} props - Component props
@@ -12,7 +13,8 @@ import { useEffect, useRef, useState } from 'react';
 export default function ChatSection({ 
   chatHistory = [],
   onQueryClick = null,
-  selectedQueryId = null
+  selectedQueryId = null,
+  thinkingQueryId = null
 }) {
   const [activeTab, setActiveTab] = useState('All');
   const chatEndRef = useRef(null);
@@ -47,7 +49,6 @@ export default function ChatSection({
 
   const tabs = ['All', 'Captioning', 'Grounding', 'VQA'];
 
-  // Filter chat history based on active tab
   const filteredChatHistory = activeTab === 'All' 
     ? chatHistory 
     : chatHistory.filter(chat => chat.category === activeTab);
@@ -96,62 +97,77 @@ export default function ChatSection({
             No chat history yet. Start a conversation below.
           </div>
         ) : (
-          filteredChatHistory.map((chat) => (
-            <div key={chat.id} className="space-y-3">
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-blue-400 mb-0.5 px-2 font-medium">
-                  {chat.category}
-                </span>
-                <button
-                  className={`bg-blue-600 text-white px-2 py-3 rounded-lg max-w-[75%] shadow-md transition-all cursor-pointer focus:outline-none ${
-                    localSelectedId === chat.id
-                      ? "ring-2 ring-cyan-400 ring-offset-transparent"
-                      : "hover:bg-blue-700"
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLocalSelectedId(chat.id);
-                    handleQueryClick(chat);
-                  }}
-                >
-                  <p className="leading-relaxed text-left whitespace-pre-wrap break-words max-w-full">{chat.query}</p>
-                </button>
-              </div>
-              {chat.response ? (
-                <div className="flex flex-col items-start">
-                  <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">
-                    <p className="leading-relaxed whitespace-pre-wrap break-words max-w-full">{chat.response}</p>
-                  </div>
+          filteredChatHistory.map((chat) => {
+            const isThinking = chat.isThinking && thinkingQueryId === chat.id;
+            
+            return (
+              <div key={chat.id} className="space-y-3">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-blue-400 mb-0.5 px-2 font-medium">
+                    {chat.category}
+                  </span>
+                  <button
+                    className={`bg-blue-600 text-white px-2 py-3 rounded-lg max-w-[75%] shadow-md transition-all cursor-pointer focus:outline-none ${
+                      localSelectedId === chat.id
+                        ? "ring-2 ring-cyan-400 ring-offset-transparent"
+                        : "hover:bg-blue-700"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocalSelectedId(chat.id);
+                      handleQueryClick(chat);
+                    }}
+                  >
+                    <p className="leading-relaxed text-left whitespace-pre-wrap break-words max-w-full">{chat.query}</p>
+                  </button>
                 </div>
-              ) : (
-                <div className="flex flex-col items-start">
-                  <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">
-                    <div className="flex items-center space-x-2">
-                      <svg>
-                        <circle
-                          className="opacity-25"
-                          cx="14"
-                          cy="14"
-                          r="25"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      <span className="text-sm text-slate-400">
-                        AI is thinking...
-                      </span>
+                
+                {isThinking ? (
+                  <div className="flex flex-col items-start">
+                    <div className="bg-black text-white px-4 py-3 rounded-lg max-w-[75%] border border-cyan-700/20 shadow-lg">
+                      <ThinkingEffect isVisible={true} />
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))
+                ) : chat.response ? (
+                  <div className="flex flex-col items-start">
+                    <div className={`bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border shadow-lg ${
+                      chat.error ? 'border-red-500/30' : 'border-black'
+                    }`}>
+                      <p className={`leading-relaxed whitespace-pre-wrap break-words max-w-full ${
+                        chat.error ? 'text-red-400' : ''
+                      }`}>{chat.response}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-start">
+                    <div className="bg-black text-white px-2 py-3 rounded-lg max-w-[75%] border border-black shadow-lg">
+                      <div className="flex items-center space-x-2">
+                        <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        <span className="text-sm text-slate-400">
+                          Processing...
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
         <div ref={chatEndRef} />
       </div>
